@@ -1,0 +1,495 @@
+.study-list-container {
+  padding: 20px;
+  height: 100%;
+  overflow: auto;
+  background-color: #151a1f;
+}
+
+.study-list-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.study-list-header h2 {
+  color: #5acce6;
+  margin: 0;
+}
+
+.search-container {
+  width: 300px;
+}
+
+.search-input {
+  width: 100%;
+  padding: 8px 12px;
+  border-radius: 4px;
+  border: 1px solid #2c3e50;
+  background-color: #1e2530;
+  color: #e0e0e0;
+}
+
+.search-input:focus {
+  outline: none;
+  border-color: #5acce6;
+}
+
+.loading-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 200px;
+}
+
+.loading-spinner {
+  width: 40px;
+  height: 40px;
+  border: 4px solid rgba(90, 204, 230, 0.3);
+  border-radius: 50%;
+  border-top: 4px solid #5acce6;
+  animation: spin 1s linear infinite;
+  margin-bottom: 15px;
+}
+
+@keyframes spin {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+.error-container {
+  text-align: center;
+  padding: 20px;
+  color: #ff5252;
+}
+
+.retry-button {
+  background-color: #5acce6;
+  color: #151a1f;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 4px;
+  cursor: pointer;
+  margin-top: 10px;
+}
+
+.empty-list {
+  text-align: center;
+  padding: 40px;
+  color: #a0a0a0;
+}
+
+.study-list {
+  overflow-x: auto;
+}
+
+.study-table {
+  width: 100%;
+  border-collapse: collapse;
+  background-color: #1e2530;
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+.study-table th,
+.study-table td {
+  padding: 12px 15px;
+  text-align: left;
+}
+
+.study-table th {
+  background-color: #252d38;
+  color: #5acce6;
+  font-weight: 500;
+}
+
+.study-table tr {
+  border-bottom: 1px solid #2c3e50;
+}
+
+.study-table tr:last-child {
+  border-bottom: none;
+}
+
+.study-table tr:hover {
+  background-color: #252d38;
+}
+
+.view-button {
+  display: inline-block;
+  padding: 6px 12px;
+  background-color: #5acce6;
+  color: #151a1f;
+  text-decoration: none;
+  border-radius: 4px;
+  text-align: center;
+  transition: background-color 0.2s;
+}
+
+.view-button:hover {
+  background-color: #4db8d5;
+}
+
+.study-list-title {
+  font-size: 24px;
+  color: #5acce6;
+  font-weight: 500;
+}
+
+.study-list-filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-bottom: 20px;
+  width: 100%;
+}
+
+.filter-group {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-width: 200px;
+}
+
+.filter-label {
+  font-size: 14px;
+  color: #5acce6;
+  margin-bottom: 5px;
+  display: flex;
+  align-items: center;
+}
+
+.filter-label svg {
+  margin-left: 5px;
+  cursor: pointer;
+}
+
+.filter-input {
+  padding: 10px;
+  border-radius: 4px;
+  border: 1px solid #252d38;
+  background-color: #1e2530;
+  color: #e0e0e0;
+  font-size: 14px;
+}
+
+.filter-input:focus {
+  outline: none;
+  border-color: #5acce6;
+}
+
+.date-range {
+  display: flex;
+  gap: 10px;
+}
+
+.date-input {
+  flex: 1;
+  position: relative;
+}
+
+.date-input input {
+  width: 100%;
+  padding: 10px;
+  padding-right: 30px;
+  border-radius: 4px;
+  border: 1px solid #252d38;
+  background-color: #1e2530;
+  color: #e0e0e0;
+  font-size: 14px;
+}
+
+.date-input svg {
+  position: absolute;
+  right: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #5acce6;
+  pointer-events: none;
+}
+
+.study-list-table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.study-list-table th {
+  background-color: #1e2530;
+  color: #5acce6;
+  text-align: left;
+  padding: 12px 15px;
+  font-weight: 500;
+  border-bottom: 1px solid #252d38;
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+
+.study-list-table td {
+  padding: 12px 15px;
+  border-bottom: 1px solid #252d38;
+  color: #e0e0e0;
+  transition: background-color 0.2s;
+}
+
+.study-list-table tr {
+  background-color: #1e2530;
+  transition: background-color 0.2s;
+}
+
+.study-list-table tr:hover {
+  background-color: #252d38;
+  cursor: pointer;
+}
+
+.study-list-table tr.expanded {
+  background-color: #252d38;
+}
+
+.expand-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  margin-right: 10px;
+  transition: transform 0.2s;
+}
+
+.expand-icon.expanded {
+  transform: rotate(90deg);
+}
+
+.patient-name {
+  font-weight: 500;
+  color: #ffffff;
+}
+
+.study-date {
+  color: #a0a0a0;
+}
+
+.modality-badge {
+  display: inline-block;
+  padding: 4px 8px;
+  border-radius: 4px;
+  background-color: #2a3340;
+  color: #5acce6;
+  font-size: 12px;
+  font-weight: 500;
+  margin-right: 5px;
+}
+
+.instances-count {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 24px;
+  height: 24px;
+  background-color: #2a3340;
+  color: #5acce6;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.pagination {
+  display: flex;
+  justify-content: center;
+  margin-top: 20px;
+  gap: 5px;
+}
+
+.pagination-button {
+  padding: 8px 12px;
+  background-color: #1e2530;
+  color: #e0e0e0;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.pagination-button:hover {
+  background-color: #252d38;
+}
+
+.pagination-button.active {
+  background-color: #5acce6;
+  color: #151a1f;
+}
+
+.pagination-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Thêm các styles cho phần mở rộng */
+.series-list {
+  padding: 10px 15px 10px 45px;
+  background-color: #1a1f25;
+  border-bottom: 1px solid #252d38;
+}
+
+.series-item {
+  display: flex;
+  align-items: center;
+  padding: 8px 0;
+  border-bottom: 1px solid #252d38;
+}
+
+.series-item:last-child {
+  border-bottom: none;
+}
+
+.series-description {
+  flex: 1;
+}
+
+.series-modality {
+  width: 80px;
+}
+
+.series-instances {
+  width: 80px;
+  text-align: center;
+}
+
+/* Thêm styles cho loading và error */
+.loading-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 300px;
+  width: 100%;
+}
+
+.loading-spinner {
+  border: 4px solid rgba(90, 204, 230, 0.2);
+  border-radius: 50%;
+  border-top: 4px solid #5acce6;
+  width: 40px;
+  height: 40px;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+.loading-text {
+  margin-top: 20px;
+  color: #5acce6;
+  font-size: 16px;
+  font-weight: 500;
+}
+
+.error-message {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  color: #ff6b6b;
+  padding: 30px;
+  text-align: center;
+  background-color: #151a1f;
+  font-size: 16px;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+.no-studies {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 300px;
+  color: #a0a0a0;
+  font-style: italic;
+  font-size: 16px;
+  background-color: #1e2530;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+.search-bar {
+  display: flex;
+  margin-bottom: 20px;
+  width: 100%;
+  max-width: 500px;
+}
+
+.search-input {
+  flex: 1;
+  padding: 12px 15px;
+  border: none;
+  border-radius: 6px 0 0 6px;
+  background-color: #1e2530;
+  color: #e0e0e0;
+  font-size: 14px;
+}
+
+.search-input:focus {
+  outline: none;
+  box-shadow: 0 0 0 2px #5acce6;
+}
+
+.search-button {
+  padding: 12px 20px;
+  background-color: #5acce6;
+  color: #151a1f;
+  border: none;
+  border-radius: 0 6px 6px 0;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.search-button:hover {
+  background-color: #4db8d2;
+}
+
+.pagination {
+  display: flex;
+  justify-content: center;
+  margin-top: 20px;
+  gap: 5px;
+}
+
+.pagination-button {
+  padding: 8px 12px;
+  background-color: #1e2530;
+  color: #e0e0e0;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.pagination-button:hover {
+  background-color: #252d38;
+}
+
+.pagination-button.active {
+  background-color: #5acce6;
+  color: #151a1f;
+}
+
+.pagination-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}

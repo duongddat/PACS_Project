@@ -1,0 +1,340 @@
+.dicom-viewer-container {
+  display: flex;
+  width: 100%;
+  height: 100vh;
+}
+
+.viewer-main-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+/* Cải thiện thanh công cụ */
+.viewer-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background-color: #1e2530;
+  border-radius: 6px;
+  padding: 8px 12px;
+  margin-bottom: 10px;
+}
+
+/* Cải thiện nút chọn chế độ xem */
+.view-mode-selector {
+  display: flex;
+  background-color: #252d38;
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.view-mode-button {
+  background-color: transparent;
+  color: #a0a0a0;
+  border: none;
+  padding: 6px 12px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.view-mode-button.active {
+  background-color: #5acce6;
+  color: #151a1f;
+}
+
+/* Cải thiện viewport */
+.viewer-viewport {
+  position: relative;
+  flex: 1;
+  background-color: #000;
+  border-radius: 6px;
+  overflow: hidden;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+}
+
+/* Cải thiện thanh cuộn */
+.scroll-indicator {
+  position: absolute;
+  right: 15px;
+  top: 50%;
+  transform: translateY(-50%);
+  height: 80%;
+  width: 20px;
+  display: flex;
+  justify-content: center;
+  z-index: 5;
+}
+
+.scroll-track {
+  width: 4px;
+  height: 100%;
+  background-color: rgba(100, 100, 100, 0.3);
+  border-radius: 4px;
+  position: relative;
+}
+
+.scroll-thumb {
+  width: 10px;
+  height: 24px;
+  background-color: rgba(90, 204, 230, 0.8);
+  border-radius: 5px;
+  position: absolute;
+  left: -3px;
+  transition: top 0.1s ease-out;
+  cursor: pointer;
+}
+
+.scroll-thumb:hover {
+  background-color: rgba(90, 204, 230, 1);
+  width: 12px;
+  left: -4px;
+}
+
+/* Cải thiện panel thông tin */
+.viewer-info-panel {
+  background-color: #1e2530;
+  border-radius: 6px;
+  padding: 12px;
+  margin-top: 10px;
+  max-height: 200px;
+  overflow-y: auto;
+}
+
+.info-section {
+  margin-bottom: 12px;
+}
+
+.info-section h4 {
+  color: #5acce6;
+  margin-bottom: 8px;
+  font-size: 14px;
+}
+
+.info-row {
+  display: flex;
+  margin-bottom: 4px;
+}
+
+.info-label {
+  width: 80px;
+  color: #a0a0a0;
+  font-size: 13px;
+}
+
+.info-value {
+  flex: 1;
+  font-size: 13px;
+}
+
+/* Cải thiện sidebar */
+.viewer-left-sidebar {
+  width: 220px;
+  background-color: #1e2530;
+  padding: 10px;
+  margin-right: 10px;
+  border-radius: 6px;
+}
+
+.sidebar-section h3 {
+  color: #5acce6;
+  font-size: 16px;
+  margin-bottom: 10px;
+}
+
+.series-thumbnails {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.thumbnail {
+  background-color: #252d38;
+  padding: 8px;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.thumbnail.active {
+  background-color: #5acce6;
+  color: #151a1f;
+}
+
+/* Cải thiện hiệu ứng loading */
+.viewport-loading {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background-color: rgba(0, 0, 0, 0.7);
+  z-index: 10;
+}
+
+.loading-spinner {
+  width: 50px;
+  height: 50px;
+  border: 4px solid rgba(90, 204, 230, 0.3);
+  border-radius: 50%;
+  border-top: 4px solid #5acce6;
+  animation: spin 1s linear infinite;
+}
+
+.cornerstone-element {
+  width: 100%;
+  height: 100%;
+}
+
+.viewport-error {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  color: #ff5252;
+  background-color: rgba(0, 0, 0, 0.7);
+  padding: 15px;
+  border-radius: 5px;
+  max-width: 80%;
+  text-align: center;
+}
+
+.view-mode-selector {
+  display: flex;
+  gap: 5px;
+}
+
+.view-mode-button {
+  padding: 5px 10px;
+  background-color: #444;
+  border: none;
+  color: white;
+  border-radius: 3px;
+  cursor: pointer;
+}
+
+.view-mode-button.active {
+  background-color: #4285f4;
+}
+
+/* Cập nhật style cho stack-info */
+.stack-info {
+  display: flex;
+  align-items: center;
+  margin-left: 10px;
+  gap: 10px;
+}
+
+.frame-counter {
+  font-size: 14px;
+  color: #cccccc;
+}
+
+.stack-navigation {
+  display: flex;
+  flex-direction: column;
+  margin-left: 5px;
+}
+
+.stack-navigation button {
+  padding: 2px 5px;
+  font-size: 12px;
+  cursor: pointer;
+  background-color: #444;
+  border: 1px solid #555;
+  color: white;
+  border-radius: 3px;
+  transition: background-color 0.2s;
+}
+
+.stack-navigation button:hover:not(:disabled) {
+  background-color: #555;
+}
+
+.stack-navigation button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.stack-navigation button:first-child {
+  margin-bottom: 2px;
+}
+
+/* Thêm thanh cuộn bên cạnh viewport */
+.scroll-indicator {
+  position: absolute;
+  right: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  height: 80%;
+  width: 20px;
+  display: flex;
+  justify-content: center;
+  z-index: 5;
+}
+
+.scroll-track {
+  width: 4px;
+  height: 100%;
+  background-color: rgba(100, 100, 100, 0.3);
+  border-radius: 2px;
+  position: relative;
+}
+
+.scroll-thumb {
+  width: 8px;
+  height: 20px;
+  background-color: rgba(255, 255, 255, 0.7);
+  border-radius: 4px;
+  position: absolute;
+  left: -2px;
+  transition: top 0.1s ease-out;
+  cursor: pointer;
+}
+
+.scroll-thumb:hover {
+  background-color: rgba(255, 255, 255, 0.9);
+  width: 10px;
+  left: -3px;
+}
+
+/* Thêm hiệu ứng mượt mà cho cornerstone-element */
+.cornerstone-element {
+  width: 100%;
+  height: 100%;
+  position: relative;
+}
+
+/* Thêm hiệu ứng khi chuyển frame */
+@keyframes frameChange {
+  0% {
+    opacity: 0.8;
+  }
+  100% {
+    opacity: 1;
+  }
+}
+
+.cornerstone-element canvas {
+  animation: frameChange 0.2s ease-out;
+}
+
+/* Đảm bảo viewport có vị trí tương đối để định vị thanh cuộn */
+.viewer-viewport {
+  position: relative;
+  width: 100%;
+  height: 100%;
+}
+
+@keyframes spin {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
