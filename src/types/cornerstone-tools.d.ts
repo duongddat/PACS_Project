@@ -77,6 +77,10 @@ declare module "cornerstone-tools" {
   export const RectangleRoiTool: BaseTool;
   export const MagnifyTool: BaseTool;
   export const StackScrollTool: BaseTool;
+  
+  // Add missing tools to type definitions
+  export const StackScrollMouseWheelTool: BaseTool;
+  export const EllipticalRoiTool: BaseTool;
 
   // Additional functions
   export function setToolDisabled(toolName: string): void;

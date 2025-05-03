@@ -1,11 +1,18 @@
 import React from "react";
+import { DicomStudy } from "../../types/dicom";
 import "./ViewportInfo.css";
 
-interface ViewportInfoProps {
-  studyInfo?: any;
+export interface ViewportInfoProps {
+  studyInfo: DicomStudy | null;
+  currentImageIndex: number;
+  totalImages: number;
 }
 
-export const ViewportInfo: React.FC<ViewportInfoProps> = ({ studyInfo }) => {
+export const ViewportInfo: React.FC<ViewportInfoProps> = ({
+  studyInfo,
+  currentImageIndex,
+  totalImages,
+}) => {
   if (!studyInfo) {
     return null;
   }
@@ -29,6 +36,12 @@ export const ViewportInfo: React.FC<ViewportInfoProps> = ({ studyInfo }) => {
           <div className="info-label">Mô tả:</div>
           <div className="info-value">
             {studyInfo.StudyDescription || "N/A"}
+          </div>
+        </div>
+        <div className="info-row">
+          <div className="info-label">Hình ảnh:</div>
+          <div className="info-value">
+            {currentImageIndex + 1} / {totalImages}
           </div>
         </div>
       </div>

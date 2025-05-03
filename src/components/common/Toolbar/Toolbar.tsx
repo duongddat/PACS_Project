@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import * as cornerstoneTools from "cornerstone-tools";
 import "./Toolbar.css";
 import { Tooltip } from "react-tooltip";
+import { initCornerstone } from "../../../utils/cornerstoneInit";
 
 interface ToolbarProps {
   element: React.RefObject<HTMLDivElement | null>;
@@ -49,25 +50,31 @@ export const Toolbar: React.FC<ToolbarProps> = ({ element, studyInfo }) => {
       // Kiểm tra các điều kiện để hỗ trợ 3D
       const check3DSupport = () => {
         // Điều kiện 1: Có nhiều lát cắt (slices) trong cùng một series
-        const hasMultipleSlices = studyInfo.series && 
-          studyInfo.series.some((series: any) => 
-            series.instances && series.instances.length > 10);
-        
+        const hasMultipleSlices =
+          studyInfo.series &&
+          studyInfo.series.some(
+            (series: any) => series.instances && series.instances.length > 10
+          );
+
         // Điều kiện 2: Các lát cắt có khoảng cách đều nhau
-        const hasEqualSpacing = studyInfo.series && 
-          studyInfo.series.some((series: any) => 
-            series.equalSpacing === true);
-        
+        const hasEqualSpacing =
+          studyInfo.series &&
+          studyInfo.series.some((series: any) => series.equalSpacing === true);
+
         // Điều kiện 3: Có thông tin về hướng của lát cắt
-        const hasOrientation = studyInfo.series && 
-          studyInfo.series.some((series: any) => 
-            series.instances && series.instances[0] && 
-            series.instances[0].imageOrientationPatient);
-        
+        const hasOrientation =
+          studyInfo.series &&
+          studyInfo.series.some(
+            (series: any) =>
+              series.instances &&
+              series.instances[0] &&
+              series.instances[0].imageOrientationPatient
+          );
+
         // Cần đáp ứng tất cả các điều kiện
         return hasMultipleSlices && (hasEqualSpacing || hasOrientation);
       };
-      
+
       setSupports3D(check3DSupport());
     } else {
       setSupports3D(false);
@@ -80,15 +87,29 @@ export const Toolbar: React.FC<ToolbarProps> = ({ element, studyInfo }) => {
 
     try {
       // Kiểm tra xem cornerstone và cornerstoneTools đã được khởi tạo chưa
+      // Kiểm tra xem Cornerstone đã được khởi tạo chưa
+      if (!(window as any).cornerstone || !(window as any).cornerstoneTools) {
+        console.error("Cornerstone hoặc cornerstoneTools chưa được khởi tạo");
+        
+        // Thử khởi tạo lại
+        try {
+          const initialized = initCornerstone();
+          if (!initialized) {
+            console.error("Không thể khởi tạo Cornerstone từ Toolbar");
+            return;
+          }
+          console.log("Đã khởi tạo lại Cornerstone từ Toolbar");
+        } catch (error) {
+          console.error("Lỗi khi khởi tạo Cornerstone từ Toolbar:", error);
+          return;
+        }
+      }
+      
+      // Tiếp tục với mã hiện tại chỉ khi Cornerstone đã được khởi tạo
       const cornerstone = (window as any).cornerstone;
       const cornerstoneTools = (window as any).cornerstoneTools;
-
-      if (!cornerstone || !cornerstoneTools) {
-        console.error("Cornerstone hoặc cornerstoneTools chưa được khởi tạo");
-        return;
-      }
-
-      // Đảm bảo tất cả các công cụ được đăng ký
+      
+      // Đảm bảo các công cụ đã được đăng ký
       if (!toolsInitialized) {
         // Đăng ký các công cụ cơ bản
         if (cornerstoneTools.WwwcTool) {
@@ -133,57 +154,86 @@ export const Toolbar: React.FC<ToolbarProps> = ({ element, studyInfo }) => {
 
   const activateTool = (toolName: string) => {
     if (!element.current) return;
-
+  
     try {
-      // Tắt công cụ hiện tại trước khi kích hoạt công cụ mới
-      if (activeTool) {
-        try {
-          cornerstoneTools.setToolPassive(activeTool);
-        } catch (e) {
-          console.warn(`Could not set ${activeTool} to passive:`, e);
-        }
+      const cornerstone = (window as any).cornerstone;
+      const cornerstoneTools = (window as any).cornerstoneTools;
+      
+      if (!cornerstone || !cornerstoneTools) {
+        console.error("Cornerstone hoặc cornerstoneTools không được tìm thấy");
+        return;
       }
-
-      // Kiểm tra xem công cụ có tồn tại không trước khi kích hoạt
-      // Đối với StackScroll, có thể cần xử lý đặc biệt
-      if (toolName === "StackScroll") {
-        // Kiểm tra xem StackScrollTool đã được đăng ký chưa
-        try {
-          // Sử dụng type assertion để tránh lỗi TypeScript
-          const toolExists = (cornerstoneTools as any).getToolForElement(
-            element.current,
-            toolName
-          );
-          if (!toolExists) {
-            console.warn(`Tool ${toolName} not found, trying to add it first`);
-            // Thử thêm công cụ nếu chưa tồn tại
-            if (cornerstoneTools.StackScrollTool) {
-              cornerstoneTools.addTool(cornerstoneTools.StackScrollTool);
-            } else if (
-              (cornerstoneTools as any).stackTools &&
-              (cornerstoneTools as any).stackTools.StackScrollTool
-            ) {
-              cornerstoneTools.addTool(
-                (cornerstoneTools as any).stackTools.StackScrollTool
-              );
+      
+      // Tắt tất cả các công cụ trước
+      const allTools = cornerstoneTools.getToolForElement(element.current);
+      if (allTools && allTools.length > 0) {
+        allTools.forEach((tool: any) => {
+          if (tool.name) {
+            try {
+              cornerstoneTools.setToolPassive(tool.name);
+            } catch (e) {
+              console.warn(`Không thể đặt ${tool.name} thành passive:`, e);
             }
           }
-        } catch (e) {
-          console.error(`Error checking for tool ${toolName}:`, e);
+        });
+      }
+  
+      // Đảm bảo công cụ đã được đăng ký
+      if (!cornerstoneTools.getToolForElement(element.current, toolName)) {
+        console.log(`Công cụ ${toolName} chưa được đăng ký, đang thêm...`);
+        
+        // Thêm công cụ nếu chưa tồn tại
+        switch (toolName) {
+          case "Wwwc":
+            cornerstoneTools.addTool(cornerstoneTools.WwwcTool);
+            break;
+          case "Pan":
+            cornerstoneTools.addTool(cornerstoneTools.PanTool);
+            break;
+          case "Zoom":
+            cornerstoneTools.addTool(cornerstoneTools.ZoomTool);
+            break;
+          case "Length":
+            cornerstoneTools.addTool(cornerstoneTools.LengthTool);
+            break;
+          case "Angle":
+            cornerstoneTools.addTool(cornerstoneTools.AngleTool);
+            break;
+          case "RectangleRoi":
+            cornerstoneTools.addTool(cornerstoneTools.RectangleRoiTool);
+            break;
+          case "Magnify":
+            cornerstoneTools.addTool(cornerstoneTools.MagnifyTool);
+            break;
+          case "StackScroll":
+            cornerstoneTools.addTool(cornerstoneTools.StackScrollTool);
+            break;
         }
       }
-
-      // Kích hoạt công cụ mới
+  
+      // Kích hoạt công cụ mới với mouseButtonMask là 1 (chuột trái)
       cornerstoneTools.setToolActive(toolName, { mouseButtonMask: 1 });
+      
+      // Cập nhật state
       setActiveTool(toolName);
+      console.log(`Đã kích hoạt công cụ: ${toolName}`);
+      
+      // Cập nhật lại hình ảnh để hiển thị công cụ
+      if (element.current) {
+        cornerstone.updateImage(element.current);
+      }
     } catch (error) {
-      console.error(`Error activating tool ${toolName}:`, error);
+      console.error(`Lỗi khi kích hoạt công cụ ${toolName}:`, error);
     }
   };
 
   const changeViewport = (viewportType: string) => {
     // Chỉ cho phép chuyển sang chế độ 3D nếu được hỗ trợ
-    if (viewportType === "2D" || (viewportType === "3D" && supports3D) || (viewportType === "MPR" && supports3D)) {
+    if (
+      viewportType === "2D" ||
+      (viewportType === "3D" && supports3D) ||
+      (viewportType === "MPR" && supports3D)
+    ) {
       setActiveViewport(viewportType);
       // Thêm logic để chuyển đổi giữa các chế độ xem
       console.log(`Đã chuyển sang chế độ xem ${viewportType}`);
@@ -476,17 +526,33 @@ export const Toolbar: React.FC<ToolbarProps> = ({ element, studyInfo }) => {
               activeViewport === viewport.name ? "active" : ""
             }`}
             onClick={() => changeViewport(viewport.name)}
-            title={viewport.name === "2D" || supports3D ? viewport.title : `${viewport.title} (Không được hỗ trợ cho study này)`}
+            title={
+              viewport.name === "2D" || supports3D
+                ? viewport.title
+                : `${viewport.title} (Không được hỗ trợ cho study này)`
+            }
             disabled={viewport.name !== "2D" && !supports3D}
-            style={viewport.name !== "2D" && !supports3D ? { opacity: 0.5, cursor: 'not-allowed' } : {}}
+            style={
+              viewport.name !== "2D" && !supports3D
+                ? { opacity: 0.5, cursor: "not-allowed" }
+                : {}
+            }
             data-tooltip-id={`tooltip-viewport-${viewport.name}`}
-            data-tooltip-content={viewport.name === "2D" || supports3D ? viewport.title : `${viewport.title} (Không được hỗ trợ cho study này)`}
+            data-tooltip-content={
+              viewport.name === "2D" || supports3D
+                ? viewport.title
+                : `${viewport.title} (Không được hỗ trợ cho study này)`
+            }
           >
             {viewport.icon}
           </button>
         ))}
         {viewportTypes.map((viewport) => (
-          <Tooltip key={`tooltip-${viewport.name}`} id={`tooltip-viewport-${viewport.name}`} place="top" />
+          <Tooltip
+            key={`tooltip-${viewport.name}`}
+            id={`tooltip-viewport-${viewport.name}`}
+            place="top"
+          />
         ))}
       </div>
     </div>

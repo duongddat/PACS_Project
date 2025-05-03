@@ -1,5 +1,5 @@
 import React from "react";
-import { SeriesItem } from "../store/dicomStore";
+import { SeriesItem } from "../../store/dicomStore";
 import "./SeriesList.css";
 
 interface SeriesListProps {

@@ -37,10 +37,11 @@ interface DicomStore {
   isLoading: boolean;
   error: string | null;
   studyList: any[]; // Thêm studyList để hỗ trợ StudyList component
+  multiFrameInstances: Record<string, number>; // instanceUID -> số lượng frames
 
   // Actions
   fetchStudyInfo: (studyInstanceUID: string) => Promise<void>;
-  fetchSeriesList: (studyInstanceUID: string) => Promise<void>;
+  fetchSeriesList: (studyInstanceUID: string) => Promise<SeriesItem[]>;
   fetchSeriesInstances: (
     studyInstanceUID: string,
     seriesInstanceUID: string
@@ -50,6 +51,17 @@ interface DicomStore {
   resetState: () => void;
   fetchStudyList: () => Promise<void>;
   parseStudyData: (data: any) => any[]; // Thay đổi kiểu dữ liệu từ ArrayBuffer sang any
+  fetchInstanceFrames: (
+    studyInstanceUID: string,
+    seriesInstanceUID: string,
+    instanceUID: string
+  ) => Promise<number>;
+  loadFrame: (
+    studyInstanceUID: string,
+    seriesInstanceUID: string,
+    instanceUID: string,
+    frameNumber: number
+  ) => Promise<string | null>;
 }
 
 // Hàm hỗ trợ định dạng ngày tháng từ DICOM
@@ -78,6 +90,7 @@ export const useDicomStore = create<DicomStore>((set, get) => ({
   isLoading: false,
   error: null,
   studyList: [], // Khởi tạo studyList rỗng
+  multiFrameInstances: {},
 
   // Lấy thông tin study
   fetchStudyInfo: async (studyInstanceUID: string) => {
@@ -116,9 +129,6 @@ export const useDicomStore = create<DicomStore>((set, get) => ({
           );
         }
       } else if (contentType && contentType.includes("multipart/related")) {
-        // Xử lý dữ liệu multipart/related
-        // Đây là một định dạng phức tạp, cần thư viện chuyên dụng để xử lý
-        // Tạm thời, chúng ta sẽ sử dụng dữ liệu mẫu
         data = [
           {
             "0020000D": { Value: [studyInstanceUID] },
@@ -164,7 +174,6 @@ export const useDicomStore = create<DicomStore>((set, get) => ({
 
   // Lấy danh sách series
   fetchSeriesList: async (studyInstanceUID: string) => {
-    set({ isLoading: true, error: null });
     try {
       // Giả lập API call đến PACS server
       const response = await fetch(
@@ -177,22 +186,36 @@ export const useDicomStore = create<DicomStore>((set, get) => ({
 
       const data = await response.json();
 
+      // Log dữ liệu thô để kiểm tra
+      console.log("Dữ liệu thô từ API:", data);
+
       // Chuyển đổi dữ liệu thành mảng SeriesItem
       const seriesList: SeriesItem[] = data.map((item: any) => ({
-        seriesInstanceUID: item.SeriesInstanceUID,
-        seriesDescription: item.SeriesDescription || "Không có mô tả",
-        seriesNumber: parseInt(item.SeriesNumber) || 0,
-        modality: item.Modality || "Unknown",
-        instanceCount: item.NumberOfSeriesRelatedInstances || 0,
+        seriesInstanceUID: item["0020000E"]?.Value?.[0] || "",
+        seriesDescription:
+          item["0008103E"]?.Value?.[0]?.replace(/\u0000/g, "") ||
+          "Không có mô tả",
+        seriesNumber: parseInt(item["00200011"]?.Value?.[0]) || 0,
+        modality: item["00080060"]?.Value?.[0] || "Unknown",
+        instanceCount: item["00201209"]?.Value?.[0] || 0,
       }));
 
+      // Log dữ liệu đã chuyển đổi
+      console.log("Dữ liệu series sau khi chuyển đổi:", seriesList);
+
       set({ seriesList, isLoading: false });
+
+      // Return the seriesList
+      return seriesList;
     } catch (error) {
       console.error("Lỗi khi lấy danh sách series:", error);
       set({
         error: error instanceof Error ? error.message : "Lỗi không xác định",
         isLoading: false,
       });
+
+      // Return an empty array in case of error
+      return [];
     }
   },
 
@@ -209,12 +232,14 @@ export const useDicomStore = create<DicomStore>((set, get) => ({
         seriesInstanceUID
       );
 
+      console.log("Dữ liệu instances:", instancesData);
+
       // Chuyển đổi dữ liệu instances
       const formattedInstances: InstanceItem[] = instancesData.map(
         (instance: any) => ({
           instanceUID: instance["00080018"]?.Value?.[0] || "",
-          // Thay đổi từ wadors: sang wadouri: hoặc dicomweb:
-          imageId: `wadouri:${dicomWebService.baseUrl}/studies/${studyInstanceUID}/series/${seriesInstanceUID}/instances/${instance["00080018"]?.Value?.[0]}/frames/1`,
+          // Sửa lại URL cho Cornerstone - loại bỏ backticks và khoảng trắng
+          imageId: `wadouri:${dicomWebService.baseUrl}/studies/${studyInstanceUID}/series/${seriesInstanceUID}/instances/${instance["00080018"]?.Value?.[0]}`,
           instanceNumber: instance["00200013"]?.Value?.[0] || 0,
           rows: instance["00280010"]?.Value?.[0] || 0,
           columns: instance["00280011"]?.Value?.[0] || 0,
@@ -293,6 +318,42 @@ export const useDicomStore = create<DicomStore>((set, get) => ({
     }
   },
 
+  // Lấy frames cho các instances
+  fetchFramesForInstances: (
+    studyInstanceUID: string,
+    seriesInstanceUID: string,
+    imageIds: string[]
+  ) => {
+    set({ isLoading: true, error: null });
+    try {
+      console.log("Đang tải frames cho các instances...");
+
+      // Lấy danh sách instanceUIDs từ imageIds
+      const instanceUIDs = imageIds.map((imageId) => {
+        // Trích xuất instanceUID từ imageId
+        const parts = imageId.split("/");
+        return parts[parts.length - 1];
+      });
+
+      // Tạo mảng imageStack mới với URL frames
+      const updatedImageStack = instanceUIDs.map(
+        (instanceUID) =>
+          `wadouri:${dicomWebService.baseUrl}/studies/${studyInstanceUID}/series/${seriesInstanceUID}/instances/${instanceUID}`
+      );
+
+      set({
+        imageStack: updatedImageStack,
+        isLoading: false,
+      });
+
+      return true;
+    } catch (error: any) {
+      console.error("Lỗi khi tải frames:", error);
+      set({ error: error.message, isLoading: false });
+      return false;
+    }
+  },
+
   // Phân tích dữ liệu study từ JSON
   parseStudyData: (data: any) => {
     // Chuyển đổi dữ liệu từ API thành mảng các đối tượng study
@@ -305,5 +366,110 @@ export const useDicomStore = create<DicomStore>((set, get) => ({
       AccessionNumber: studyData["00080050"]?.Value?.[0] || "",
       Modalities: studyData["00080061"]?.Value?.join(", ") || "",
     }));
+  },
+
+  fetchFrame: async (
+    studyInstanceUID: string,
+    seriesInstanceUID: string,
+    instanceUID: string,
+    frameNumber: number
+  ) => {
+    set({ isLoading: true, error: null });
+    try {
+      // Tạo URL để lấy frame cụ thể
+      const frameUrl = `${dicomWebService.baseUrl}/studies/${studyInstanceUID}/series/${seriesInstanceUID}/instances/${instanceUID}/frames/${frameNumber}`;
+
+      // Tạo imageId cho frame
+      const frameImageId = `wadouri:${frameUrl}`;
+
+      // Cập nhật currentImageIndex
+      set({
+        currentImageIndex: frameNumber - 1,
+        isLoading: false,
+      });
+
+      return frameImageId;
+    } catch (error: any) {
+      console.error("Lỗi khi tải frame:", error);
+      set({ error: error.message, isLoading: false });
+      return null;
+    }
+  },
+
+  // Thêm phương thức để lấy số lượng frames của một instance
+  fetchInstanceFrames: async (
+    studyInstanceUID: string,
+    seriesInstanceUID: string,
+    instanceUID: string
+  ) => {
+    set({ isLoading: true, error: null });
+    try {
+      // Gọi API để lấy metadata của instance
+      const response = await fetch(
+        `https://localhost:7200/dicom-web/studies/${studyInstanceUID}/series/${seriesInstanceUID}/instances/${instanceUID}/metadata`,
+        {
+          headers: {
+            Accept: "application/dicom+json",
+          },
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error(
+          `Lỗi khi lấy metadata của instance: ${response.status}`
+        );
+      }
+
+      const data = await response.json();
+      const instanceData = Array.isArray(data) ? data[0] : data;
+
+      // Lấy số lượng frames từ metadata
+      const numberOfFrames = instanceData["00280008"]?.Value?.[0] || 1;
+
+      // Cập nhật state
+      set((state) => ({
+        multiFrameInstances: {
+          ...state.multiFrameInstances,
+          [instanceUID]: numberOfFrames,
+        },
+        isLoading: false,
+      }));
+
+      return numberOfFrames;
+    } catch (error) {
+      console.error("Lỗi khi lấy số lượng frames:", error);
+      set({
+        error: error instanceof Error ? error.message : "Lỗi không xác định",
+        isLoading: false,
+      });
+      return 1; // Mặc định là 1 frame nếu có lỗi
+    }
+  },
+
+  // Thêm phương thức để tải một frame cụ thể
+  loadFrame: async (
+    studyInstanceUID: string,
+    seriesInstanceUID: string,
+    instanceUID: string,
+    frameNumber: number
+  ) => {
+    set({ isLoading: true, error: null });
+    try {
+      // Tạo URL để lấy frame
+      const frameUrl = `https://localhost:7200/dicom-web/studies/${studyInstanceUID}/series/${seriesInstanceUID}/instances/${instanceUID}/frames/${frameNumber}`;
+
+      // Tạo imageId cho frame
+      const frameImageId = `wadouri:${frameUrl}`;
+
+      set({ isLoading: false });
+      return frameImageId;
+    } catch (error) {
+      console.error("Lỗi khi tải frame:", error);
+      set({
+        error: error instanceof Error ? error.message : "Lỗi không xác định",
+        isLoading: false,
+      });
+      return null;
+    }
   },
 }));

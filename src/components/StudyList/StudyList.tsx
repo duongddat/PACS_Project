@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { useDicomStore } from "../store/dicomStore";
+import { useDicomStore } from "../../store/dicomStore";
 import "./StudyList.css";
 
 export const StudyList: React.FC = () => {

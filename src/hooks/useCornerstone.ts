@@ -10,273 +10,437 @@ export const useCornerstone = () => {
   const [currentStack, setCurrentStack] = useState<string[]>([]);
   const toolsRegistered = useRef(false);
   const stackScrollActivated = useRef(false);
-  const isLoadingStack = useRef(false); // Thêm biến để theo dõi trạng thái đang tải
+  const isLoadingStack = useRef(false);
+  const webWorkerInitialized = useRef(false);
 
+  // Khởi tạo Cornerstone và các dependencies
   useEffect(() => {
     try {
-      // Make sure cornerstone is available
-      if (typeof cornerstone === 'undefined') {
-        throw new Error('Cornerstone is not loaded');
-      }
-      
-      // Ensure cornerstoneTools is properly initialized before setting external dependencies
-      if (!cornerstoneTools || !cornerstoneTools.external) {
-        throw new Error('CornerstoneTools is not properly loaded');
-      }
-      
-      // Set external dependencies in the correct order
-      cornerstoneTools.external.cornerstone = cornerstone;
-      
-      // Initialize cornerstone tools with proper configuration
-      // Avoid using SUPPORT_POINTER_EVENTS directly
-      cornerstoneTools.init({
-        showSVGCursors: true,
-        globalToolSyncEnabled: false,
-        mouseEnabled: true,
-        touchEnabled: true
-      });
-      
-      // Initialize WADO Image Loader before registering tools
-      if (cornerstoneWADOImageLoader && cornerstoneWADOImageLoader.external) {
-        cornerstoneWADOImageLoader.external.cornerstone = cornerstone;
-        
-        // Check if dicomParser exists in window
-        if ((window as any).dicomParser) {
-          cornerstoneWADOImageLoader.external.dicomParser = (window as any).dicomParser;
-        }
-        
-        // Initialize web workers
-        cornerstoneWADOImageLoader.webWorkerManager.initialize({
-          maxWebWorkers: navigator.hardwareConcurrency || 2,
-          startWebWorkersOnDemand: true,
-        });
-      }
-      
-      // Check if Hammer exists before setting it - do this after cornerstone init
-      if ((window as any).Hammer) {
-        cornerstoneTools.external.Hammer = (window as any).Hammer;
-      } else {
-        console.warn('Hammer.js not found. Some interaction tools may not work.');
-        // Continue without Hammer - basic functionality should still work
-      }
-      
-      // Register tools after initialization
-      if (!toolsRegistered.current) {
-        // Try-catch each tool registration separately
-        try {
-          // Check if tool exists before adding - use type assertion to avoid TypeScript errors
-          if ((cornerstoneTools as any).StackScrollMouseWheelTool) {
-            cornerstoneTools.addTool((cornerstoneTools as any).StackScrollMouseWheelTool);
-            console.log("StackScrollMouseWheelTool registered during initialization");
-          }
-        } catch (e) {
-          console.warn("Could not register StackScrollMouseWheelTool:", e);
-        }
-        
-        // Add other essential tools
-        try {
-          if (cornerstoneTools.PanTool) cornerstoneTools.addTool(cornerstoneTools.PanTool);
-          if (cornerstoneTools.ZoomTool) cornerstoneTools.addTool(cornerstoneTools.ZoomTool);
-          if (cornerstoneTools.WwwcTool) cornerstoneTools.addTool(cornerstoneTools.WwwcTool);
-          if (cornerstoneTools.StackScrollTool) cornerstoneTools.addTool(cornerstoneTools.StackScrollTool);
-        } catch (e) {
-          console.warn("Could not register some tools:", e);
-        }
-        
-        toolsRegistered.current = true;
-      }
-      
-      // Enable the element if it exists
-      if (elementRef.current) {
-        cornerstone.enable(elementRef.current);
-        setIsEnabled(true);
-        setError(null);
+      // Kiểm tra cornerstone có sẵn không
+      if (typeof cornerstone === "undefined") {
+        throw new Error("Cornerstone is not loaded");
       }
 
-      return () => {
-        if (elementRef!.current) {
-          // Cleanup tất cả tools
-          cornerstoneTools.clearToolState(elementRef!.current);
-          // Disable element
-          const element = elementRef!.current;
-          if (element) {
-            cornerstone.disable(element);
-          }
+      // Thiết lập external dependencies
+      cornerstoneTools.external.cornerstone = cornerstone;
+      cornerstoneWADOImageLoader.external.cornerstone = cornerstone;
+
+      // Thiết lập dicomParser nếu có
+      if ((window as any).dicomParser) {
+        cornerstoneWADOImageLoader.external.dicomParser = (
+          window as any
+        ).dicomParser;
+      } else {
+        console.warn("dicomParser not found, wadouri may not work properly");
+      }
+
+      // Đăng ký các image loader
+      cornerstoneWADOImageLoader.wadouri.register(cornerstone);
+      cornerstoneWADOImageLoader.wadors.register(cornerstone);
+
+      // Khởi tạo web workers với cấu hình đơn giản hơn
+      if (!webWorkerInitialized.current) {
+        try {
+          console.log("Initializing web workers...");
+
+          // Cấu hình đơn giản nhất có thể
+          cornerstoneWADOImageLoader.webWorkerManager.initialize({
+            maxWebWorkers: 1,
+            startWebWorkersOnDemand: true,
+            webWorkerPath: "/cornerstoneWADOImageLoaderWebWorker.js", // Đảm bảo file này tồn tại trong thư mục public
+            taskConfiguration: {
+              decodeTask: {
+                initializeCodecsOnStartup: false,
+                usePDFJS: false,
+              },
+            },
+          });
+
+          webWorkerInitialized.current = true;
+          console.log("Web workers initialized successfully");
+        } catch (e) {
+          console.error("Error initializing web workers:", e);
+          // Tiếp tục ngay cả khi web workers không khởi tạo được
         }
-      };
+      }
+
+      // Khởi tạo cornerstone tools
+      cornerstoneTools.init({
+        mouseEnabled: true,
+        touchEnabled: true,
+      });
+
+      // Đăng ký các công cụ cần thiết
+      if (!toolsRegistered.current) {
+        try {
+          if ((cornerstoneTools as any).StackScrollMouseWheelTool) {
+            cornerstoneTools.addTool(
+              (cornerstoneTools as any).StackScrollMouseWheelTool
+            );
+          }
+
+          if ((cornerstoneTools as any).PanTool) {
+            cornerstoneTools.addTool((cornerstoneTools as any).PanTool);
+          }
+
+          if ((cornerstoneTools as any).ZoomTool) {
+            cornerstoneTools.addTool((cornerstoneTools as any).ZoomTool);
+          }
+
+          toolsRegistered.current = true;
+          console.log("Tools registered successfully");
+        } catch (e) {
+          console.warn("Error registering tools:", e);
+        }
+      }
     } catch (err) {
-      const errorMessage =
-        err instanceof Error ? err.message : "Unknown error occurred";
-      setError(errorMessage);
-      console.error("Cornerstone initialization error:", errorMessage);
+      setError(
+        err instanceof Error ? err.message : "Error initializing Cornerstone"
+      );
+      console.error("Error initializing Cornerstone:", err);
     }
   }, []);
 
-  const loadImage = async (imageId: string) => {
-    if (!elementRef.current || !isEnabled) return;
-
-    try {
-      const image = await cornerstone.loadImage(imageId);
-      await cornerstone.displayImage(elementRef.current, image);
-      setError(null);
-      return image;
-    } catch (err) {
-      const errorMessage =
-        err instanceof Error ? err.message : "Error loading image";
-      setError(errorMessage);
-      console.error("Image loading error:", errorMessage);
-    }
-  };
-
-  // Sử dụng useCallback để tránh tạo hàm mới mỗi khi component re-render
-  const loadImageStack = useCallback(async (imageIds: string[]) => {
-    // Kiểm tra nếu đang tải, không thực hiện lại
-    if (isLoadingStack.current || !elementRef.current || !isEnabled || imageIds.length === 0) return;
-    
-    // Kiểm tra nếu stack mới giống stack hiện tại, không tải lại
-    if (currentStack.length > 0 && 
-        currentStack.length === imageIds.length && 
-        currentStack[0] === imageIds[0]) {
-      console.log("Same image stack, skipping reload");
-      return true;
-    }
-    
-    // Đánh dấu đang tải
-    isLoadingStack.current = true;
-
-    try {
-      // Lưu trữ stack hiện tại
-      setCurrentStack(imageIds);
-
-      // Tải ảnh đầu tiên
-      const image = await cornerstone.loadImage(imageIds[0]);
-      await cornerstone.displayImage(elementRef.current, image);
-
-      // Thiết lập stack tool state
-      const stack = {
-        currentImageIdIndex: 0,
-        imageIds: [...imageIds],
-      };
-
-      // Xóa stack tool state cũ
+  // Kích hoạt và vô hiệu hóa element
+  useEffect(() => {
+    // Chỉ kích hoạt nếu element tồn tại
+    if (elementRef.current) {
       try {
-        cornerstoneTools.clearToolState(elementRef.current, "stack");
-      } catch (e) {
-        console.warn("Could not clear stack tool state:", e);
+        console.log("Enabling element for Cornerstone");
+        cornerstone.enable(elementRef.current);
+        setIsEnabled(true);
+        setError(null);
+        console.log("Element enabled successfully");
+      } catch (err) {
+        console.error("Error enabling element:", err);
+        setError("Error enabling element");
       }
+    }
 
-      // Thêm stack mới vào tool state
-      try {
-        cornerstoneTools.addToolState(elementRef.current, "stack", stack);
-      } catch (e) {
-        console.error("Could not add stack tool state:", e);
-      }
-
-      // Chỉ kích hoạt công cụ cuộn nếu chưa được kích hoạt trước đó
-      if (!stackScrollActivated.current) {
-        let activated = false;
-        
-        // Kiểm tra xem công cụ đã được đăng ký chưa
+    // Cleanup khi component unmount
+    return () => {
+      if (elementRef.current && isEnabled) {
         try {
-          // Thử đăng ký lại nếu cần
-          if (!(cornerstoneTools as any).getToolForElement(elementRef.current, "StackScrollMouseWheel")) {
-            if ((cornerstoneTools as any).StackScrollMouseWheelTool) {
-              cornerstoneTools.addTool((cornerstoneTools as any).StackScrollMouseWheelTool);
-            }
-          }
-          
-          // Thử kích hoạt StackScrollMouseWheel
-          cornerstoneTools.setToolActive("StackScrollMouseWheel", {
-            mouseButtonMask: 1,
-          });
-          activated = true;
-          stackScrollActivated.current = true; // Đánh dấu đã kích hoạt
-          console.log("StackScrollMouseWheel activated (once)");
-        } catch (e) {
-          console.warn("Could not activate StackScrollMouseWheel:", e);
+          // Vô hiệu hóa element một cách an toàn
+          console.log("Disabling element...");
+          cornerstone.disable(elementRef.current);
+          console.log("Element disabled successfully");
+        } catch (err) {
+          console.warn("Error disabling element:", err);
         }
+      }
+    };
+  }, [elementRef.current]);
 
-        // Nếu không thành công, thử kích hoạt StackScroll
-        if (!activated) {
-          try {
-            // Kiểm tra xem công cụ đã được đăng ký chưa
-            if (!(cornerstoneTools as any).getToolForElement(elementRef.current, "StackScroll")) {
-              if ((cornerstoneTools as any).StackScrollTool) {
-                cornerstoneTools.addTool((cornerstoneTools as any).StackScrollTool);
-              }
-            }
-            
-            cornerstoneTools.setToolActive("StackScroll", { mouseButtonMask: 1 });
-            stackScrollActivated.current = true; // Đánh dấu đã kích hoạt
-            console.log("StackScroll activated (once)");
-          } catch (e) {
-            console.error("Could not activate any stack scroll tool:", e);
-          }
-        }
-      } else {
-        console.log("Stack scroll tool already activated, skipping activation");
+  // Tải và hiển thị hình ảnh
+  const loadImage = useCallback(
+    async (imageId: string) => {
+      if (!elementRef.current || !isEnabled) {
+        console.error("Element not ready or not enabled");
+        return null;
       }
 
-      setError(null);
-      return true;
-    } catch (err) {
-      const errorMessage =
-        err instanceof Error ? err.message : "Error loading image stack";
-      setError(errorMessage);
-      console.error("Image stack loading error:", errorMessage);
-      return false;
-    } finally {
-      // Đánh dấu đã tải xong
-      isLoadingStack.current = false;
+      try {
+        console.log("Loading image:", imageId);
+
+        const image = await cornerstone.loadImage(imageId);
+
+        console.log("Image loaded, displaying...");
+
+        // Tạo viewport mặc định dựa trên hình ảnh
+        const viewport = cornerstone.getDefaultViewportForImage(
+          elementRef.current,
+          image
+        );
+
+        // Điều chỉnh các tham số hiển thị để tránh vỡ hình
+        viewport.scale = 1.0; // Đặt tỷ lệ ban đầu là 1.0
+        viewport.translation = { x: 0, y: 0 }; // Đặt vị trí ban đầu ở giữa
+        viewport.voi = {
+          windowWidth: image.windowWidth || 600,
+          windowCenter: image.windowCenter || 400,
+        };
+
+        // Hiển thị hình ảnh với viewport đã cấu hình
+        cornerstone.displayImage(elementRef.current, image, viewport);
+
+        return image;
+      } catch (err) {
+        console.error("Error loading image:", err);
+        setError("Error loading image");
+        return null;
+      }
+    },
+    [elementRef, isEnabled]
+  );
+
+  // Tải và hiển thị stack hình ảnh
+  const loadImageStack = useCallback(
+    async (imageIds: string[]) => {
+      console.log("loadImageStack called with", imageIds.length, "images");
+
+      if (!elementRef.current) {
+        console.error("Element ref is null");
+        return false;
+      }
+
+      if (!isEnabled) {
+        console.error("Element is not enabled");
+        return false;
+      }
+
+      if (isLoadingStack.current) {
+        console.log("Already loading a stack, skipping");
+        return false;
+      }
+
+      if (imageIds.length === 0) {
+        console.error("Empty imageIds array");
+        return false;
+      }
+
+      // Đánh dấu đang tải
+      isLoadingStack.current = true;
+
+      try {
+        // Lưu stack hiện tại
+        setCurrentStack(imageIds);
+
+        // Làm sạch URL hình ảnh
+        const cleanedImageIds = imageIds.map((id) => {
+          // Loại bỏ dấu backtick và khoảng trắng thừa
+          let cleanId = id.replace(/`/g, "").trim();
+
+          // Loại bỏ khoảng trắng giữa các phần của URL
+          cleanId = cleanId.replace(/\s+/g, "");
+
+          // Đảm bảo URL bắt đầu bằng wadouri: (không có khoảng trắng)
+          if (cleanId.startsWith("wadouri: ")) {
+            cleanId = "wadouri:" + cleanId.substring(9);
+          }
+
+          // Nếu URL không có tiền tố, thêm vào
+          if (
+            !cleanId.startsWith("wadouri:") &&
+            !cleanId.startsWith("wadors:")
+          ) {
+            return `wadouri:${cleanId}`;
+          }
+
+          return cleanId;
+        });
+
+        console.log("Loading first image:", cleanedImageIds[0]);
+
+        // Tải hình ảnh đầu tiên
+        const image = await cornerstone.loadImage(cleanedImageIds[0]);
+
+        console.log("First image loaded, displaying...");
+
+        // Tạo viewport mặc định dựa trên hình ảnh
+        const viewport = cornerstone.getDefaultViewportForImage(
+          elementRef.current,
+          image
+        );
+
+        // Điều chỉnh các tham số hiển thị để tránh vỡ hình
+        viewport.scale = 1.0; // Đặt tỷ lệ ban đầu là 1.0
+        viewport.translation = { x: 0, y: 0 }; // Đặt vị trí ban đầu ở giữa
+        viewport.voi = {
+          windowWidth: image.windowWidth || 400,
+          windowCenter: image.windowCenter || 200,
+        };
+
+        // Hiển thị hình ảnh với viewport đã cấu hình
+        cornerstone.displayImage(elementRef.current, image, viewport);
+        console.log("First image displayed");
+
+        // Thiết lập stack state
+        console.log("Setting up stack tools");
+        const stack = {
+          currentImageIdIndex: 0,
+          imageIds: [...cleanedImageIds],
+        };
+
+        // Xóa stack cũ trước khi thêm mới
+        try {
+          cornerstoneTools.clearToolState(elementRef.current, "stack");
+          console.log("Cleared previous stack state");
+        } catch (e) {
+          console.warn("Error clearing stack tool state:", e);
+        }
+
+        // Thêm stack mới
+        try {
+          cornerstoneTools.addToolState(elementRef.current, "stack", stack);
+          console.log("Stack tool state added");
+        } catch (e) {
+          console.warn("Error adding stack tool state:", e);
+        }
+
+        // Kích hoạt công cụ cuộn nếu chưa được kích hoạt
+        if (!stackScrollActivated.current) {
+          try {
+            console.log("Activating StackScrollMouseWheel tool");
+            cornerstoneTools.setToolActive("StackScrollMouseWheel", {
+              mouseButtonMask: 1,
+            });
+            stackScrollActivated.current = true;
+            console.log("StackScrollMouseWheel activated");
+          } catch (e) {
+            console.warn("Error activating scroll tool:", e);
+          }
+        }
+
+        // Thêm xử lý sự kiện resize
+        const handleResize = () => {
+          if (elementRef.current) {
+            console.log("Resizing cornerstone element");
+            cornerstone.resize(elementRef.current);
+          }
+        };
+
+        window.addEventListener("resize", handleResize);
+
+        // Đảm bảo kích thước ban đầu chính xác
+        cornerstone.resize(elementRef.current);
+
+        console.log("Image stack loaded successfully");
+        return true;
+      } catch (err) {
+        console.error("Error loading image stack:", err);
+        setError("Error loading image stack");
+        return false;
+      } finally {
+        // Đánh dấu đã tải xong
+        isLoadingStack.current = false;
+      }
+    },
+    [elementRef, isEnabled]
+  );
+
+  // Cuộn đến hình ảnh theo index
+  const scrollToIndex = useCallback(
+    async (index: number) => {
+      if (!elementRef.current || !isEnabled || currentStack.length === 0) {
+        return false;
+      }
+
+      if (index < 0 || index >= currentStack.length) {
+        return false;
+      }
+
+      try {
+        console.log("Scrolling to index", index);
+
+        // Lấy stack state
+        const stackState = cornerstoneTools.getToolState(
+          elementRef.current,
+          "stack"
+        );
+
+        if (stackState && stackState.data && stackState.data.length > 0) {
+          // Cập nhật index hiện tại
+          stackState.data[0].currentImageIdIndex = index;
+
+          // Lưu viewport hiện tại
+          const viewport = cornerstone.getViewport(elementRef.current);
+
+          // Tải và hiển thị hình ảnh mới
+          console.log(
+            "Loading image at index",
+            index,
+            ":",
+            currentStack[index]
+          );
+          const image = await cornerstone.loadImage(currentStack[index]);
+
+          // Giữ nguyên các tham số viewport hiện tại nhưng cập nhật VOI nếu cần
+          if (
+            !viewport.voi ||
+            !viewport.voi.windowWidth ||
+            !viewport.voi.windowCenter
+          ) {
+            viewport.voi = {
+              windowWidth: image.windowWidth || 400,
+              windowCenter: image.windowCenter || 200,
+            };
+          }
+
+          console.log("Displaying image");
+          cornerstone.displayImage(elementRef.current, image, viewport);
+
+          console.log("Scrolled to index", index, "successfully");
+          return true;
+        } else {
+          console.warn("No stack state found");
+          return false;
+        }
+      } catch (err) {
+        console.error("Error scrolling to index:", err);
+        return false;
+      }
+    },
+    [elementRef, isEnabled, currentStack]
+  );
+
+  // Thêm hàm để xử lý việc thay đổi kích thước viewport
+  const resizeViewport = useCallback(() => {
+    if (elementRef.current && isEnabled) {
+      console.log("Manually resizing viewport");
+      cornerstone.resize(elementRef.current);
     }
-  }, [isEnabled, currentStack]);
+  }, [elementRef, isEnabled]);
 
-  const scrollToIndex = async (index: number) => {
-    if (!elementRef.current || !isEnabled || currentStack.length === 0) return;
-
-    if (index < 0 || index >= currentStack.length) {
-      console.error("Invalid stack index:", index);
-      return;
+  // Thêm hàm để reset viewport về kích thước ban đầu
+  const resetViewport = useCallback(() => {
+    if (!elementRef.current || !isEnabled || currentStack.length === 0) {
+      return false;
     }
 
     try {
-      // Lấy stack state
-      const stackState = cornerstoneTools.getToolState(
-        elementRef.current,
-        "stack"
-      );
-      if (stackState && stackState.data && stackState.data.length > 0) {
-        // Cập nhật index hiện tại
-        stackState.data[0].currentImageIdIndex = index;
+      console.log("Resetting viewport");
 
-        // Tải và hiển thị ảnh mới với hiệu ứng mượt mà
-        const image = await cornerstone.loadImage(currentStack[index]);
-        
-        // Thêm hiệu ứng mượt mà khi chuyển frame
-        const viewport = cornerstone.getViewport(elementRef.current);
-        await cornerstone.displayImage(elementRef.current, image);
+      // Lấy hình ảnh hiện tại
+      const image = cornerstone.getImage(elementRef.current);
+
+      if (image) {
+        // Tạo viewport mặc định mới
+        const viewport = cornerstone.getDefaultViewportForImage(
+          elementRef.current,
+          image
+        );
+
+        // Đặt lại các tham số
+        viewport.scale = 1.0;
+        viewport.translation = { x: 0, y: 0 };
+        viewport.voi = {
+          windowWidth: image.windowWidth || 400,
+          windowCenter: image.windowCenter || 200,
+        };
+
+        // Áp dụng viewport mới
         cornerstone.setViewport(elementRef.current, viewport);
-        
-        // Kích hoạt sự kiện để cập nhật UI
-        const event = new CustomEvent('cornerstoneimagerendered', {
-          detail: {
-            element: elementRef.current,
-            image: image
-          }
-        });
-        elementRef.current.dispatchEvent(event);
+        cornerstone.updateImage(elementRef.current);
+
+        return true;
       }
+      return false;
     } catch (err) {
-      console.error("Error scrolling to index:", err);
+      console.error("Error resetting viewport:", err);
+      return false;
     }
-  };
+  }, [elementRef, isEnabled, currentStack]);
 
   return {
     element: elementRef,
     loadImage,
     loadImageStack,
     scrollToIndex,
+    resizeViewport,
+    resetViewport,
     isEnabled,
     error,
+    cornerstone,
   };
 };
