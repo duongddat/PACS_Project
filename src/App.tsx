@@ -12,6 +12,7 @@ import { DicomViewer } from "./components/DicomViewer/DicomViewer";
 import { initCornerstone } from "./utils/cornerstoneInit";
 import "hammerjs";
 import "./App.css";
+import { Layout } from "./components/common/Layout/Layout";
 
 // Component để xử lý URL query params
 const ViewerRedirect: React.FC = () => {
@@ -51,10 +52,12 @@ function App() {
     <Router>
       <div className="App">
         <Routes>
-          <Route path="/" element={<StudyList />} />
-          <Route path="/viewer" element={<ViewerRedirect />} />
-          <Route path="/viewer/:studyInstanceUID" element={<DicomViewer />} />
-          <Route path="*" element={<Navigate to="/" replace />} />
+          <Route path="/" element={<Layout />}>
+            <Route path="/" element={<StudyList />} />
+            <Route path="/viewer" element={<ViewerRedirect />} />
+            <Route path="/viewer/:studyInstanceUID" element={<DicomViewer />} />
+            <Route path="*" element={<Navigate to="/" replace />} />
+          </Route>
         </Routes>
       </div>
     </Router>

@@ -3,7 +3,6 @@ import * as cornerstoneTools from "cornerstone-tools";
 import * as cornerstoneMath from "cornerstone-math";
 import * as cornerstoneWADOImageLoader from "cornerstone-wado-image-loader";
 import * as dicomParser from "dicom-parser";
-import { configureSegmentation } from "./cornerstoneSegmentationConfig";
 
 // Biến toàn cục để theo dõi trạng thái khởi tạo
 let isInitialized = false;
@@ -42,9 +41,6 @@ export function initCornerstone() {
       globalToolSyncEnabled: false,
     });
 
-    // Cấu hình segmentation để tránh cảnh báo colorLUT
-    configureSegmentation();
-
     // Đăng ký các công cụ cơ bản
     cornerstoneTools.addTool(cornerstoneTools.WwwcTool);
     cornerstoneTools.addTool(cornerstoneTools.PanTool);
@@ -79,39 +75,34 @@ export function initCornerstone() {
       cornerstoneWADOImageLoader.wadors.register(cornerstone);
     }
 
-    // Cấu hình WADO URI Loader
+    // Cấu hình WADO URI Loader với cache control mạnh hơn
     cornerstoneWADOImageLoader.configure({
       beforeSend: function (xhr: XMLHttpRequest) {
-        // Thêm header cho WADO URI requests
         xhr.setRequestHeader(
           "Accept",
           "multipart/related; type=application/dicom; transfer-syntax=*"
         );
-        // Thêm header để tránh cache
         xhr.setRequestHeader(
           "Cache-Control",
-          "no-cache, no-store, must-revalidate"
+          "no-cache, no-store, must-revalidate, max-age=0"
         );
         xhr.setRequestHeader("Pragma", "no-cache");
-        xhr.setRequestHeader("Expires", "0");
+        xhr.setRequestHeader("Expires", "-1");
+        xhr.setRequestHeader("If-Modified-Since", "0");
       },
       useWebWorkers: true,
       decodeConfig: {
         convertFloatPixelDataToInt: false,
         use16Bits: true,
         preservePixelData: true,
-        // Thêm cấu hình để xử lý hình ảnh tốt hơn
         maxWebWorkers: navigator.hardwareConcurrency || 4,
         webWorkerTaskPriority: 5,
         strict: false,
       },
     });
 
-    // Cấu hình thêm cho cornerstone
-    cornerstone.imageCache.setMaximumSizeBytes(1024 * 1024 * 128); // 128MB cache
-
-    // Vô hiệu hóa cache cho các frames
-    cornerstone.imageCache.setMaximumSizeBytes(0);
+    // Giảm kích thước cache của cornerstone
+    cornerstone.imageCache.setMaximumSizeBytes(1024 * 1024 * 32); // Giảm xuống 32MB
 
     // Gán vào window để các component khác có thể sử dụng
     (window as any).cornerstone = cornerstone;
@@ -133,28 +124,6 @@ export function initCornerstone() {
 // Hàm kiểm tra xem Cornerstone đã được khởi tạo chưa
 export function isCornerstoneInitialized() {
   return isInitialized;
-}
-
-// Hàm để tải và hiển thị ảnh
-export function loadAndDisplayImage(imageId: string, element: HTMLElement) {
-  try {
-    // Bật cornerstone cho element
-    cornerstone.enable(element);
-
-    // Sửa lại phương thức tải ảnh phù hợp với phiên bản cornerstone của bạn
-    // Thay vì loadAndCacheImage, có thể bạn cần sử dụng loadImage
-    cornerstone
-      .loadImage(imageId)
-      .then((image: any) => {
-        cornerstone.displayImage(element, image);
-        console.log("Đã tải và hiển thị ảnh thành công:", imageId);
-      })
-      .catch((error: any) => {
-        console.error("Lỗi khi tải ảnh:", error, imageId);
-      });
-  } catch (error) {
-    console.error("Lỗi khi enable cornerstone hoặc tải ảnh:", error);
-  }
 }
 
 export function activateTool(toolName: string, element: HTMLElement) {

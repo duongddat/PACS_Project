@@ -3,7 +3,7 @@ import * as dicomParser from "dicom-parser";
 export interface DicomStudy {
   StudyInstanceUID: string;
   PatientName: string;
-  PatientID: string; // Thêm thuộc tính này
+  PatientID: string;
   StudyDate: string;
   StudyDescription: string;
   AccessionNumber: string;

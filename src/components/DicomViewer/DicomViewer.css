@@ -39,8 +39,6 @@
   align-items: center;
   background-color: #151a1f;
   padding: 5px 10px;
-  border-bottom: 1px solid #3a4a5a;
-  height: 40px;
 }
 
 .toggle-panel-btn {
@@ -131,7 +129,9 @@
 }
 
 @keyframes spin {
-  to { transform: rotate(360deg); }
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 .viewport-error {

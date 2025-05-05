@@ -1,6 +1,6 @@
 import { create } from "zustand";
 import { DicomStudy } from "../utils/dicomUtils";
-import { DicomWebService } from "../services/dicomWeb/dicomWebService";
+import { DicomWebService } from "../services/dicomWebService";
 
 // Định nghĩa interface cho Series
 export interface SeriesItem {

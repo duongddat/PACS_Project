@@ -26,6 +26,11 @@ declare module "cornerstone-tools" {
   ): { data: any[] };
   export function clearToolState(element: HTMLElement, toolType?: string): void;
 
+  export function addStackStateManager(
+    element: HTMLElement,
+    toolTypes: string[]
+  ): void;
+
   // Event data interface
   export interface EventData {
     element: HTMLElement;
@@ -77,13 +82,35 @@ declare module "cornerstone-tools" {
   export const RectangleRoiTool: BaseTool;
   export const MagnifyTool: BaseTool;
   export const StackScrollTool: BaseTool;
-  
-  // Add missing tools to type definitions
   export const StackScrollMouseWheelTool: BaseTool;
   export const EllipticalRoiTool: BaseTool;
+
+  // Thêm các hàm để lấy công cụ
+  export function getToolForElement(element: HTMLElement, toolName?: string): BaseTool[] | BaseTool;
 
   // Additional functions
   export function setToolDisabled(toolName: string): void;
   export function setToolEnabled(toolName: string): void;
   export function setToolPassive(toolName: string): void;
+  
+  // Thêm định nghĩa cho module segmentation
+  export namespace store {
+    export namespace modules {
+      export namespace segmentation {
+        export const configuration: {
+          segmentsPerLabelmap: number;
+        };
+        export const setters: {
+          colorLUT: (colorLUT: number[][]) => void;
+        };
+        export function setColorLUT(colorLUT: number[][]): void;
+      }
+    }
+  }
+  
+  export namespace modules {
+    export namespace segmentation {
+      export const configuration: any;
+    }
+  }
 }

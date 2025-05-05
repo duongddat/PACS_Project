@@ -422,8 +422,6 @@ export const DicomViewer: React.FC = () => {
 
   return (
     <div className="ohif-viewer-container">
-      <Header />
-
       <div className="viewer-content">
         {showLeftPanel && (
           <div className="left-panel">
@@ -479,7 +477,7 @@ export const DicomViewer: React.FC = () => {
               gridTemplateColumns: `repeat(${layout.columns}, 1fr)`,
             }}
           >
-            {viewports.map((viewport, index) => (
+            {viewports.map((viewport: any, index: any) => (
               <div
                 key={viewport.id || index}
                 className={`viewport ${

@@ -64,9 +64,65 @@ declare module "cornerstone-core" {
     pixel: { x: number; y: number }
   ): { x: number; y: number };
 
-  // Add imageCache property
+  // Mở rộng imageCache property
   export const imageCache: {
     setMaximumSizeBytes: (sizeInBytes: number) => void;
     purgeCache: () => void;
+    getCacheInfo: () => {
+      maximumSizeInBytes: number;
+      cacheSizeInBytes: number;
+      numberOfImagesCached: number;
+    };
+    getImageLoadObject: (imageId: string) => any;
+    putImageLoadObject: (imageId: string, imageLoadObject: any) => void;
+    removeImageLoadObject: (imageId: string) => void;
+    isCacheFull: () => boolean;
+    cachedDataInfo: () => { [key: string]: { size: number; imageId: string } };
+  };
+
+  // Thêm imageLoadPoolManager để quản lý các yêu cầu tải hình ảnh
+  export const imageLoadPoolManager: {
+    addRequest: (
+      requestFn: () => Promise<any>,
+      type: string,
+      priority: number
+    ) => void;
+    clearRequestStack: () => void;
+    startGrabbing: () => void;
+    getRequestPool: () => any;
+  };
+
+  // Thêm các hàm tiện ích
+  export function getEnabledElement(element: HTMLElement): {
+    element: HTMLElement;
+    image: IImage;
+    viewport: Viewport;
+    canvas: HTMLCanvasElement;
+    enabledElement: boolean;
+  };
+
+  export function getEnabledElements(): Array<{
+    element: HTMLElement;
+    image: IImage;
+    viewport: Viewport;
+    canvas: HTMLCanvasElement;
+    enabledElement: boolean;
+  }>;
+
+  export function addEnabledElement(element: HTMLElement): void;
+  export function removeEnabledElement(element: HTMLElement): void;
+
+  // Thêm các hàm xử lý sự kiện
+  export function events(): {
+    addEventListener: (
+      element: HTMLElement,
+      type: string,
+      callback: (event: any) => void
+    ) => void;
+    removeEventListener: (
+      element: HTMLElement,
+      type: string,
+      callback: (event: any) => void
+    ) => void;
   };
 }
