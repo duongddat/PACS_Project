@@ -45,7 +45,10 @@ export const SeriesList: React.FC<SeriesListProps> = ({
           >
             <div className="series-thumbnail">
               {series.thumbnailUrl ? (
-                <img src={series.thumbnailUrl} alt="Series thumbnail" />
+                <div className="thumbnail-container">
+                  <img src={series.thumbnailUrl} alt="Series thumbnail" />
+                  <div className="modality-badge">{series.modality}</div>
+                </div>
               ) : (
                 <div className="thumbnail-placeholder">
                   <span>{series.modality}</span>
@@ -57,7 +60,7 @@ export const SeriesList: React.FC<SeriesListProps> = ({
                 {series.seriesDescription || "Không có mô tả"}
               </div>
               <div className="series-details">
-                <span>Series #{series.seriesNumber}</span>
+                <span>S:{series.seriesNumber}</span>
                 <span>{series.instanceCount} images</span>
               </div>
             </div>

@@ -5,7 +5,6 @@ import { useDicomStore } from "../../store/dicomStore";
 import { useViewerStore } from "../../store/viewerStore";
 import { SeriesList } from "../SeriesList/SeriesList";
 import { Toolbar } from "../common/Toolbar/Toolbar";
-import { ViewportInfo } from "../ViewportInfo/ViewportInfo";
 import { StackNavigation } from "../StackNavigation/StackNavigation";
 import {
   isCornerstoneInitialized,
@@ -525,11 +524,6 @@ export const DicomViewer: React.FC = () => {
 
                     {viewportReady && (
                       <>
-                        <ViewportInfo
-                          studyInfo={studyInfo}
-                          currentImageIndex={currentImageIndex}
-                          totalImages={imageStack.length}
-                        />
                         <StackNavigation
                           currentIndex={currentImageIndex}
                           totalImages={imageStack.length}
