@@ -1,31 +1,12 @@
 import React, { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
-import * as cornerstone from "@cornerstonejs/core";
-import * as cornerstoneTools from "@cornerstonejs/tools";
 import { useStudyStore } from "../../store/studyStore";
 import { useViewportStore } from "../../store/viewportStore";
 import Viewport from "./Viewport";
 import Toolbar from "./Toolbar";
 import "./Viewer.css";
-
-// Khởi tạo Cornerstone3D
-const initCornerstone = async () => {
-  try {
-    await cornerstone.init();
-    await cornerstoneTools.init();
-
-    // Đăng ký các công cụ cần thiết
-    cornerstoneTools.addTool(cornerstoneTools.WindowLevelTool);
-    cornerstoneTools.addTool(cornerstoneTools.PanTool);
-    cornerstoneTools.addTool(cornerstoneTools.ZoomTool);
-    cornerstoneTools.addTool(cornerstoneTools.LengthTool);
-    cornerstoneTools.addTool(cornerstoneTools.AngleTool);
-
-    console.log("Cornerstone đã được khởi tạo thành công");
-  } catch (error) {
-    console.error("Lỗi khi khởi tạo Cornerstone:", error);
-  }
-};
+import { initCornerstone } from "../../utils/cornerstoneInit";
+import { cornerstoneDestroy } from "../../utils/cornerstoneDestroy";
 
 const Viewer: React.FC = () => {
   const { studyInstanceUID } = useParams<{ studyInstanceUID: string }>();
@@ -57,38 +38,8 @@ const Viewer: React.FC = () => {
 
     // Cleanup khi component unmount
     return () => {
-      // Dọn dẹp tài nguyên Cornerstone
       const cleanupCornerstone = async () => {
-        try {
-          // Hủy tất cả các rendering engine
-          const renderingEngines = cornerstone.getRenderingEngines();
-          if (renderingEngines && renderingEngines.length > 0) {
-            renderingEngines.forEach((engine) => {
-              if (engine) {
-                engine.destroy();
-              }
-            });
-          }
-
-          // Hủy tất cả các toolGroup
-          const toolGroups =
-            cornerstoneTools.ToolGroupManager.getAllToolGroups();
-          if (toolGroups && toolGroups.length > 0) {
-            toolGroups.forEach((toolGroup) => {
-              const toolGroupId = toolGroup.id;
-              if (toolGroupId) {
-                cornerstoneTools.ToolGroupManager.destroyToolGroup(toolGroupId);
-              }
-            });
-          }
-
-          // Xóa cache
-          cornerstone.cache.purgeCache();
-
-          console.log("Đã dọn dẹp tài nguyên Cornerstone");
-        } catch (error) {
-          console.error("Lỗi khi dọn dẹp Cornerstone:", error);
-        }
+        await cornerstoneDestroy();
       };
 
       cleanupCornerstone();

@@ -48,3 +48,7 @@ body {
   height: 100%;
   width: 100%;
 }
+
+#toolbar-tooltip {
+  z-index: 999 !important;
+}

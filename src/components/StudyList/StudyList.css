@@ -32,47 +32,51 @@
 
 /* Thanh tìm kiếm cơ bản */
 .search-bar {
-  background-color: var(--dark-bg-secondary);
-  border-radius: var(--border-radius);
-  box-shadow: var(--shadow-sm);
-  margin-bottom: 1.25rem;
-  transition: all var(--transition-speed);
-  border: 1px solid var(--dark-border-color);
+  background-color: #1a2234;
+  border-radius: 10px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
+  margin-bottom: 1.5rem;
+  border: 1px solid #2d3749;
   overflow: hidden;
+  transition: all 0.3s ease;
+  margin-left: auto;
+  margin-right: auto;
 }
 
 .search-bar:focus-within {
-  box-shadow: var(--shadow);
-  border-color: var(--primary-color);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.35), 0 0 0 2px rgba(66, 153, 225, 0.25);
+  border-color: #4299e1;
+  transform: translateY(-2px);
 }
 
 .basic-search-form {
   display: flex;
-  align-items: center;
-  flex-wrap: wrap;
+  flex-direction: column;
+  width: 100%;
 }
 
 .search-input-wrapper {
   position: relative;
-  flex: 1;
-  min-width: 200px;
+  width: 100%;
+  padding: 8px 16px;
+  display: flex;
+  align-items: center;
 }
 
 .search-icon {
-  position: absolute;
-  left: 1rem;
-  top: 50%;
-  transform: translateY(-50%);
-  color: var(--dark-text-muted);
+  color: #63b3ed;
+  font-size: 18px;
+  margin-right: 12px;
 }
 
 .basic-search-input {
   width: 100%;
-  padding: 0.875rem 1rem 0.875rem 2.5rem;
-  border: none;
   background: transparent;
-  font-size: 1rem;
-  color: var(--dark-text-primary);
+  border: none;
+  font-size: 16px;
+  color: #e2e8f0;
+  padding: 10px 0;
+  font-weight: 400;
 }
 
 .basic-search-input:focus {
@@ -80,72 +84,122 @@
 }
 
 .basic-search-input::placeholder {
-  color: var(--dark-text-muted);
+  color: #718096;
+  opacity: 0.8;
 }
 
 .clear-input-btn {
-  position: absolute;
-  right: 0.75rem;
-  top: 50%;
-  transform: translateY(-50%);
   background: none;
   border: none;
-  color: var(--dark-text-muted);
+  color: #718096;
   cursor: pointer;
-  padding: 0.25rem;
-  font-size: 0.85rem;
+  padding: 8px;
+  font-size: 14px;
   border-radius: 50%;
+  margin-left: 8px;
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: all var(--transition-speed);
+  transition: all 0.2s;
 }
 
 .clear-input-btn:hover {
-  background-color: var(--dark-bg-tertiary);
-  color: var(--danger-color);
+  background-color: #2d3749;
+  color: #fc8181;
 }
 
 .basic-search-btn {
-  padding: 0.875rem 1.5rem;
-  background-color: var(--primary-color);
-  color: var(--dark-text-primary);
+  background-color: #3182ce;
+  color: white;
   border: none;
-  font-weight: 500;
+  padding: 16px;
+  font-weight: 600;
   cursor: pointer;
-  transition: all var(--transition-speed);
-  border-radius: 0;
+  transition: background-color 0.3s;
+  width: 100%;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  font-size: 14px;
 }
 
 .basic-search-btn:hover {
-  background-color: var(--primary-dark);
+  background-color: #4299e1;
 }
 
 .advanced-search-toggle {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
-  padding: 0.875rem 1.25rem;
-  background-color: var(--dark-bg-secondary);
-  color: var(--dark-text-secondary);
+  justify-content: center;
+  gap: 8px;
+  padding: 12px;
+  background-color: #1a2234;
+  color: #a0aec0;
   border: none;
-  border-left: 1px solid var(--dark-border-color);
+  border-top: 1px solid #2d3749;
   cursor: pointer;
-  transition: all var(--transition-speed);
+  transition: all 0.3s;
+  width: 100%;
+  font-size: 14px;
+  font-weight: 500;
 }
 
-.advanced-search-toggle:hover,
-.advanced-search-toggle.active {
-  background-color: var(--primary-light);
-  color: var(--primary-dark);
+.advanced-search-toggle:hover {
+  background-color: #2d3749;
+  color: #63b3ed;
 }
 
 .advanced-search-toggle i {
-  transition: transform var(--transition-speed);
+  transition: transform 0.3s;
+  font-size: 16px;
 }
 
 .advanced-search-toggle.active i {
   transform: rotate(180deg);
+}
+
+/* Hiệu ứng shimmer khi đang nhập */
+.search-bar.typing::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, #63b3ed, transparent);
+  animation: shimmer 2s infinite;
+}
+
+@keyframes shimmer {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+/* Media queries */
+@media (min-width: 640px) {
+  .basic-search-form {
+    flex-direction: row;
+  }
+
+  .search-input-wrapper {
+    flex: 1;
+    border-right: 1px solid #2d3749;
+  }
+
+  .basic-search-btn {
+    width: auto;
+    min-width: 150px;
+  }
+
+  .advanced-search-toggle {
+    width: auto;
+    border-top: none;
+    border-left: 1px solid #2d3749;
+    padding: 0 24px;
+  }
 }
 
 /* Panel tìm kiếm nâng cao */

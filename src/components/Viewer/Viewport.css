@@ -1,40 +1,23 @@
 .viewport {
+  position: relative;
   width: 100%;
   height: 100%;
   background-color: #000;
-  position: relative;
   overflow: hidden;
-  flex: 1;
-  min-height: 500px;
+  border: 1px solid rgba(66, 153, 225, 0.5);
+  border-radius: 8px;
 }
 
 .viewport-placeholder {
   display: flex;
   justify-content: center;
   align-items: center;
+  width: 100%;
   height: 100%;
-  color: #666;
-  font-size: 1.2rem;
+  color: #fff;
+  font-size: 14px;
 }
 
-.viewport-overlay {
-  position: absolute;
-  top: 10px;
-  left: 10px;
-  background-color: rgba(0, 0, 0, 0.5);
-  color: white;
-  padding: 5px 10px;
-  border-radius: 4px;
-  font-size: 0.9rem;
-  pointer-events: none;
-  z-index: 10;
-}
-
-.image-index {
-  font-weight: bold;
-}
-
-/* Thêm CSS cho loading indicator */
 .viewport-loading {
   position: absolute;
   top: 0;
@@ -46,16 +29,16 @@
   justify-content: center;
   align-items: center;
   background-color: rgba(0, 0, 0, 0.7);
-  color: white;
-  z-index: 20;
+  color: #fff;
+  z-index: 10;
 }
 
 .loading-spinner {
-  width: 40px;
-  height: 40px;
-  border: 4px solid rgba(255, 255, 255, 0.3);
+  border: 3px solid rgba(255, 255, 255, 0.3);
   border-radius: 50%;
-  border-top: 4px solid white;
+  border-top: 3px solid #fff;
+  width: 30px;
+  height: 30px;
   animation: spin 1s linear infinite;
   margin-bottom: 10px;
 }
@@ -67,4 +50,199 @@
   100% {
     transform: rotate(360deg);
   }
+}
+
+/* Cập nhật CSS cho thanh thước */
+.viewport-overlay {
+  position: absolute;
+  bottom: 10px;
+  left: 10px;
+  right: 10px;
+  color: #fff;
+  font-size: 12px;
+  z-index: 5;
+  pointer-events: none;
+}
+
+.image-index {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  background-color: rgba(0, 0, 0, 0.5);
+  padding: 5px 10px;
+  border-radius: 4px;
+}
+
+/* Thêm class mới cho thanh thước bên phải */
+.vertical-scroll-container {
+  position: absolute;
+  top: 50px;
+  right: 10px;
+  height: calc(100% - 100px);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  background-color: rgba(0, 0, 0, 0.5);
+  padding: 5px;
+  border-radius: 4px;
+  z-index: 5;
+}
+
+.vertical-scroll-bar {
+  position: relative;
+  width: 4px;
+  height: 100%;
+  background-color: rgba(255, 255, 255, 0.3);
+  border-radius: 2px;
+  margin: 5px 0;
+}
+
+.vertical-scroll-indicator {
+  position: absolute;
+  left: -2px;
+  width: 8px;
+  height: 8px;
+  background-color: #fff;
+  border-radius: 4px;
+  transform: translateY(-50%);
+  transition: top 0.2s ease;
+}
+
+.frame-count {
+  font-size: 10px;
+  color: white;
+  text-align: center;
+  margin: 2px 0;
+}
+
+.frame-count.top {
+  position: absolute;
+  top: 0;
+  width: 100%;
+}
+
+.frame-count.bottom {
+  position: absolute;
+  bottom: 0;
+  width: 100%;
+}
+
+.vertical-scroll-indicator {
+  position: absolute;
+  left: 0;
+  width: 100%;
+  background-color: #fff;
+  border-radius: 4px;
+  transition: top 0.1s ease;
+}
+
+.image-counter {
+  margin-bottom: 5px;
+  font-weight: bold;
+}
+
+/* Thêm CSS cho thông tin DICOM */
+.dicom-info {
+  position: absolute;
+  color: #fff;
+  font-size: 12px;
+  font-family: monospace;
+  z-index: 5;
+  pointer-events: none;
+}
+
+.dicom-info-top-left {
+  top: 10px;
+  left: 10px;
+}
+
+.dicom-info-top-right {
+  top: 10px;
+  right: 10px;
+  text-align: right;
+}
+
+.dicom-info-bottom-left {
+  bottom: 10px;
+  left: 10px;
+}
+
+.dicom-info-bottom-right {
+  bottom: 10px;
+  right: 10px;
+  text-align: right;
+}
+
+.dicom-info p {
+  margin: 3px 0;
+  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.8);
+}
+
+/* Cải thiện thanh thước */
+.image-scroll-bar {
+  position: relative;
+  width: 100%;
+  height: 4px;
+  background-color: rgba(255, 255, 255, 0.3);
+  border-radius: 2px;
+  margin-top: 5px;
+}
+
+.image-scroll-indicator {
+  position: absolute;
+  top: -2px;
+  width: 8px;
+  height: 8px;
+  background-color: #fff;
+  border-radius: 4px;
+  transform: translateX(-50%);
+  transition: left 0.2s ease;
+}
+
+/* Thêm CSS cho các marker hướng (A, P, R, L) */
+.orientation-marker {
+  position: absolute;
+  color: #fff;
+  font-size: 14px;
+  font-weight: bold;
+  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.8);
+  z-index: 5;
+}
+
+.orientation-marker-top {
+  top: 5px;
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+.orientation-marker-right {
+  right: 5px;
+  top: 50%;
+  transform: translateY(-50%);
+}
+
+.orientation-marker-bottom {
+  bottom: 5px;
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+.orientation-marker-left {
+  left: 5px;
+  top: 50%;
+  transform: translateY(-50%);
+}
+
+/* Thêm CSS cho window/level info */
+.window-level-info {
+  position: absolute;
+  bottom: 10px;
+  left: 10px;
+  color: #fff;
+  font-size: 12px;
+  font-family: monospace;
+  background-color: rgba(0, 0, 0, 0.5);
+  padding: 3px 6px;
+  border-radius: 4px;
+  z-index: 5;
 }

@@ -23,7 +23,33 @@ export const initCornerstone = async () => {
 
     // Tạo tool group mặc định
     const toolGroupId = "default";
-    cornerstoneTools.ToolGroupManager.createToolGroup(toolGroupId);
+    const toolGroup =
+      cornerstoneTools.ToolGroupManager.createToolGroup(toolGroupId);
+
+    if (toolGroup) {
+      // Thêm các công cụ vào toolGroup
+      toolGroup.addTool(cornerstoneTools.PanTool.toolName);
+      toolGroup.addTool(cornerstoneTools.ZoomTool.toolName);
+      toolGroup.addTool(cornerstoneTools.WindowLevelTool.toolName);
+      toolGroup.addTool(cornerstoneTools.LengthTool.toolName);
+      toolGroup.addTool(cornerstoneTools.ProbeTool.toolName);
+      toolGroup.addTool(cornerstoneTools.StackScrollTool.toolName);
+
+      // Thiết lập công cụ mặc định
+      toolGroup.setToolActive(cornerstoneTools.WindowLevelTool.toolName, {
+        bindings: [{ mouseButton: 1 }],
+      });
+
+      // Thiết lập StackScrollTool với binding chuột giữa
+      toolGroup.setToolActive(cornerstoneTools.StackScrollTool.toolName, {
+        bindings: [{ mouseButton: 2 }], // Chuột giữa
+      });
+
+      // Sử dụng mouseButton: 4 để đại diện cho wheel event
+      toolGroup.setToolActive(cornerstoneTools.StackScrollTool.toolName, {
+        bindings: [{ mouseButton: 4 }],
+      });
+    }
 
     console.log("Cornerstone đã được khởi tạo thành công");
     return true;

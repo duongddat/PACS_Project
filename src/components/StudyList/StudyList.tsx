@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import { Link } from "react-router-dom";
 import { DicomWebApi } from "../../api/DicomWebApi";
 import { DicomStudy } from "../../utils/dicomUtils";
@@ -13,6 +13,9 @@ const StudyList: React.FC<StudyListProps> = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isAdvancedSearchOpen, setIsAdvancedSearchOpen] = useState(false);
+  const [isTyping, setIsTyping] = useState(false);
+  const searchBarRef = useRef<HTMLDivElement>(null);
+
   const [searchParams, setSearchParams] = useState({
     patientName: "",
     patientId: "",
@@ -81,6 +84,11 @@ const StudyList: React.FC<StudyListProps> = () => {
     loadStudies();
   };
 
+  // Xóa giá trị tìm kiếm
+  const clearSearchInput = () => {
+    setSearchParams((prev) => ({ ...prev, patientName: "" }));
+  };
+
   // Format ngày từ YYYYMMDD sang DD/MM/YYYY
   const formatDate = (dateString: string) => {
     if (!dateString || dateString.length !== 8) return dateString;
@@ -95,8 +103,18 @@ const StudyList: React.FC<StudyListProps> = () => {
     setIsAdvancedSearchOpen(!isAdvancedSearchOpen);
   };
 
+  // Xử lý focus vào input
+  const handleInputFocus = () => {
+    setIsTyping(true);
+  };
+
+  // Xử lý blur khỏi input
+  const handleInputBlur = () => {
+    setIsTyping(false);
+  };
+
   return (
-    <div className="study-list-container">
+    <div className="study-list-container dark-theme">
       <div className="study-list-header">
         <h1>Danh sách nghiên cứu</h1>
         <p className="study-count">
@@ -108,8 +126,11 @@ const StudyList: React.FC<StudyListProps> = () => {
         </p>
       </div>
 
-      {/* Form tìm kiếm cơ bản luôn hiển thị */}
-      <div className="search-bar">
+      {/* Thanh tìm kiếm cải tiến */}
+      <div
+        ref={searchBarRef}
+        className={`search-bar ${isTyping ? "typing" : ""}`}
+      >
         <form onSubmit={handleSearch} className="basic-search-form">
           <div className="search-input-wrapper">
             <i className="fas fa-search search-icon"></i>
@@ -118,6 +139,8 @@ const StudyList: React.FC<StudyListProps> = () => {
               name="patientName"
               value={searchParams.patientName}
               onChange={handleSearchChange}
+              onFocus={handleInputFocus}
+              onBlur={handleInputBlur}
               placeholder="Tìm kiếm theo tên bệnh nhân..."
               className="basic-search-input"
             />
@@ -125,9 +148,7 @@ const StudyList: React.FC<StudyListProps> = () => {
               <button
                 type="button"
                 className="clear-input-btn"
-                onClick={() => {
-                  setSearchParams((prev) => ({ ...prev, patientName: "" }));
-                }}
+                onClick={clearSearchInput}
               >
                 <i className="fas fa-times"></i>
               </button>
@@ -143,8 +164,8 @@ const StudyList: React.FC<StudyListProps> = () => {
             }`}
             onClick={toggleAdvancedSearch}
           >
-            <i className="fas fa-sliders-h"></i>
             <span className="toggle-text">Tìm kiếm nâng cao</span>
+            <i className="fas fa-chevron-down"></i>
           </button>
         </form>
       </div>
