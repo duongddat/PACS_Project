@@ -14,6 +14,7 @@ interface StudyState {
   // Actions
   fetchStudies: (params?: Record<string, string>) => Promise<void>;
   setCurrentStudy: (study: Study) => void;
+  fetchStudyByUID: (studyInstanceUID: string) => Promise<void>;
   fetchSeriesForStudy: (studyInstanceUID: string) => Promise<void>;
   setCurrentSeries: (series: Series) => void;
   fetchInstancesForSeries: (studyInstanceUID: string, seriesInstanceUID: string) => Promise<void>;
@@ -46,6 +47,28 @@ export const useStudyStore = create<StudyState>((set, get) => ({
   setCurrentStudy: (study) => {
     set({ currentStudy: study });
     get().fetchSeriesForStudy(study.StudyInstanceUID);
+  },
+  
+  // Thêm hàm mới để lấy thông tin study theo UID
+  fetchStudyByUID: async (studyInstanceUID) => {
+    set({ isLoading: true, error: null });
+    try {
+      // Sử dụng tham số tìm kiếm để lấy study cụ thể
+      const studies = await DicomWebApi.getStudies({ StudyInstanceUID: studyInstanceUID });
+      
+      if (studies.length > 0) {
+        // Cập nhật currentStudy
+        set({ currentStudy: studies[0], isLoading: false });
+      } else {
+        throw new Error('Không tìm thấy nghiên cứu với ID đã cho');
+      }
+    } catch (error) {
+      console.error('Lỗi khi tải thông tin nghiên cứu:', error);
+      set({ 
+        isLoading: false, 
+        error: error instanceof Error ? error.message : 'Lỗi không xác định khi tải thông tin nghiên cứu'
+      });
+    }
   },
   
   fetchSeriesForStudy: async (studyInstanceUID) => {

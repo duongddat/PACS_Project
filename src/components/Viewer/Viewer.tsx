@@ -15,6 +15,7 @@ const Viewer: React.FC = () => {
 
   const {
     fetchSeriesForStudy,
+    fetchStudyByUID,
     currentStudy,
     series,
     currentSeries,
@@ -46,12 +47,15 @@ const Viewer: React.FC = () => {
     };
   }, []);
 
-  // Tải series khi component được mount
+  // Tải thông tin study và series khi component được mount
   useEffect(() => {
     if (studyInstanceUID) {
+      // Lấy thông tin study trước
+      fetchStudyByUID(studyInstanceUID);
+      // Sau đó lấy danh sách series
       fetchSeriesForStudy(studyInstanceUID);
     }
-  }, [studyInstanceUID, fetchSeriesForStudy]);
+  }, [studyInstanceUID, fetchStudyByUID, fetchSeriesForStudy]);
 
   // Khởi tạo viewport
   useEffect(() => {

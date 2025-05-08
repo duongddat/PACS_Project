@@ -42,8 +42,6 @@ const Viewport: React.FC<ViewportProps> = React.memo(({ id }) => {
   const viewportId = `viewport-${id}`;
   const toolGroupId = `toolgroup-${id}`;
   const [isLoading, setIsLoading] = useState(false);
-  const resizeTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-  const wheelTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const metadataCacheRef = useRef<Map<string, any>>(new Map());
 
   // State để lưu trữ thông tin DICOM
@@ -168,7 +166,10 @@ const Viewport: React.FC<ViewportProps> = React.memo(({ id }) => {
           stackViewport.resetProperties();
         }
       } catch (err) {
-        console.error("Lỗi khi điều chỉnh hình ảnh vừa với viewport:", err);
+        console.error(
+          "Lỗi khi điều chỉnh hình hình ảnh vừa với viewport:",
+          err
+        );
       }
     },
     []
@@ -191,35 +192,90 @@ const Viewport: React.FC<ViewportProps> = React.memo(({ id }) => {
           throw new Error("Rendering engine không tồn tại");
         }
 
+        // Lưu trữ tham chiếu đến viewport hiện tại
         let stackViewport = renderingEngine.getViewport(
           viewportId
         ) as cornerstone.StackViewport;
         if (!stackViewport) {
-          throw new Error("Viewport không tồn tại");
+          // Nếu viewport không tồn tại, tạo mới
+          console.log("Viewport không tồn tại, tạo mới...");
+          renderingEngine.enableElement({
+            viewportId,
+            element: viewportRef.current,
+            type: cornerstone.Enums.ViewportType.STACK,
+          });
+
+          stackViewport = renderingEngine.getViewport(
+            viewportId
+          ) as cornerstone.StackViewport;
+
+          if (!stackViewport) {
+            throw new Error("Không thể tạo viewport mới");
+          }
         }
 
-        // Tối ưu: Chỉ reset viewport khi cần thiết
+        // Reset viewport
         stackViewport.reset();
         stackViewport.render();
 
-        // Tối ưu: Sử dụng Promise.all để tải hình ảnh và trích xuất metadata song song
-        const [image] = await Promise.all([
-          cornerstone.imageLoader.loadAndCacheImage(imageId),
-          extractDicomInfo(imageId),
-        ]);
+        // Tải hình ảnh và trích xuất metadata
+        try {
+          // Tải hình ảnh
+          const image = await cornerstone.imageLoader.loadAndCacheImage(
+            imageId
+          );
 
-        // Lấy lại instance viewport mới trước khi setStack
-        stackViewport = renderingEngine.getViewport(
-          viewportId
-        ) as cornerstone.StackViewport;
-        if (!stackViewport) {
-          throw new Error("Viewport không tồn tại sau khi tải hình ảnh");
+          // Trích xuất thông tin DICOM
+          await extractDicomInfo(imageId);
+
+          // Kiểm tra lại viewport sau khi tải hình ảnh
+          // Sử dụng try-catch để xử lý trường hợp viewport không còn tồn tại
+          try {
+            stackViewport = renderingEngine.getViewport(
+              viewportId
+            ) as cornerstone.StackViewport;
+
+            if (!stackViewport) {
+              // Nếu viewport không còn tồn tại, tạo mới
+              renderingEngine.enableElement({
+                viewportId,
+                element: viewportRef.current,
+                type: cornerstone.Enums.ViewportType.STACK,
+              });
+
+              stackViewport = renderingEngine.getViewport(
+                viewportId
+              ) as cornerstone.StackViewport;
+            }
+
+            // Thiết lập stack và render
+            stackViewport.setStack([imageId]);
+            fitImageToViewport(stackViewport);
+            stackViewport.render();
+          } catch (viewportError) {
+            console.error(
+              "Lỗi khi truy cập viewport sau khi tải hình ảnh:",
+              viewportError
+            );
+            // Tạo lại viewport nếu cần
+            renderingEngine.enableElement({
+              viewportId,
+              element: viewportRef.current,
+              type: cornerstone.Enums.ViewportType.STACK,
+            });
+
+            const newViewport = renderingEngine.getViewport(
+              viewportId
+            ) as cornerstone.StackViewport;
+
+            newViewport.setStack([imageId]);
+            fitImageToViewport(newViewport);
+            newViewport.render();
+          }
+        } catch (loadError) {
+          console.error("Lỗi khi tải hình ảnh:", loadError);
+          throw loadError;
         }
-
-        // Thiết lập stack và render
-        stackViewport.setStack([imageId]);
-        fitImageToViewport(stackViewport);
-        stackViewport.render();
       } catch (error) {
         console.error("Lỗi khi tải và hiển thị hình ảnh:", error);
       } finally {
@@ -229,9 +285,19 @@ const Viewport: React.FC<ViewportProps> = React.memo(({ id }) => {
     [renderingEngineId, viewportId, fitImageToViewport, extractDicomInfo]
   );
 
+  // Thêm hàm để xóa cache khi cần thiết
+  const clearCache = useCallback(() => {
+    metadataCacheRef.current.clear();
+    // Xóa cache của cornerstone
+    cornerstone.cache.purgeCache();
+  }, []);
+
   // Khởi tạo viewport khi component được mount
   useEffect(() => {
     if (!viewportRef.current) return;
+
+    // Xóa cache khi component được mount
+    clearCache();
 
     // Kích hoạt element cho cornerstone
     let renderingEngine = cornerstone.getRenderingEngine(renderingEngineId);
@@ -278,6 +344,9 @@ const Viewport: React.FC<ViewportProps> = React.memo(({ id }) => {
 
     // Cleanup khi component unmount
     return () => {
+      // Xóa cache trước khi unmount
+      clearCache();
+
       const engine = cornerstone.getRenderingEngine(renderingEngineId);
       if (engine) {
         engine.disableElement(viewportId);
@@ -285,7 +354,7 @@ const Viewport: React.FC<ViewportProps> = React.memo(({ id }) => {
       }
       cornerstoneTools.ToolGroupManager.destroyToolGroup(toolGroupId);
     };
-  }, [id, renderingEngineId, viewportId, toolGroupId]);
+  }, [id, renderingEngineId, viewportId, toolGroupId, clearCache]);
 
   // Xử lý khi imageIds hoặc currentImageIdIndex thay đổi
   useEffect(() => {
@@ -299,6 +368,10 @@ const Viewport: React.FC<ViewportProps> = React.memo(({ id }) => {
       setIsLoading(false);
       return;
     }
+
+    // Xóa cache khi chuyển sang hình ảnh mới
+    // Chỉ xóa cache cornerstone, giữ lại metadata cache
+    cornerstone.cache.purgeCache();
 
     loadAndDisplayImage(imageId);
   }, [viewport?.imageIds, viewport?.currentImageIdIndex, loadAndDisplayImage]);
