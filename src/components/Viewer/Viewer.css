@@ -1,0 +1,106 @@
+.viewer-container {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  width: 100%;
+  background-color: #1e1e1e;
+  color: #ffffff;
+}
+
+.viewer-header {
+  padding: 10px 20px;
+  background-color: #2d2d2d;
+  border-bottom: 1px solid #3d3d3d;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.viewer-header h2 {
+  margin: 0;
+  font-size: 1.2rem;
+  font-weight: 500;
+}
+
+.study-info {
+  display: flex;
+  gap: 20px;
+  font-size: 0.9rem;
+  color: #cccccc;
+}
+
+.viewer-content {
+  display: flex;
+  flex: 1;
+  overflow: hidden;
+  height: calc(100vh - 60px); /* Chiều cao = 100vh - chiều cao header */
+}
+
+.series-panel {
+  width: 250px;
+  background-color: #2d2d2d;
+  border-right: 1px solid #3d3d3d;
+  overflow-y: auto;
+  padding: 10px;
+  flex-shrink: 0; /* Ngăn không cho panel co lại */
+}
+
+.series-panel h3 {
+  margin: 0 0 10px 0;
+  font-size: 1rem;
+  font-weight: 500;
+  color: #cccccc;
+}
+
+.series-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.series-item {
+  background-color: #3d3d3d;
+  border-radius: 4px;
+  padding: 10px;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.series-item:hover {
+  background-color: #4d4d4d;
+}
+
+.series-item.active {
+  background-color: #0078d4;
+}
+
+.series-number {
+  font-weight: bold;
+  margin-bottom: 5px;
+}
+
+.series-description {
+  font-size: 0.9rem;
+  margin-bottom: 5px;
+  word-break: break-word;
+}
+
+.series-modality {
+  font-size: 0.8rem;
+  color: #cccccc;
+  margin-bottom: 5px;
+}
+
+.series-count {
+  font-size: 0.8rem;
+  color: #cccccc;
+}
+
+.viewport-container {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  min-height: 0; /* Quan trọng để flex child có thể co lại */
+  height: 100%; /* Đảm bảo chiều cao tối đa */
+}

@@ -7,6 +7,9 @@ export interface DicomStudy {
   StudyDate: string;
   StudyDescription: string;
   AccessionNumber: string;
+  Modalities?: string;
+  NumberOfSeries?: number;
+  NumberOfInstances?: number;
 }
 
 export const parseDicomTag = (dataset: any, tag: string): string => {
@@ -73,6 +76,9 @@ export const formatDicomDate = (dateString: string): string => {
 
 export const parseDicomStudy = (study: any): DicomStudy => {
   const studyDate = parseDicomTag(study, "00080020");
+  const modalities = study["00080061"]?.Value?.join("/") || "";
+  const numberOfSeries = parseInt(parseDicomTag(study, "00201206") || "0", 10);
+  const numberOfInstances = parseInt(parseDicomTag(study, "00201208") || "0", 10);
 
   return {
     StudyInstanceUID: parseDicomTag(study, "0020000D"),
@@ -81,5 +87,8 @@ export const parseDicomStudy = (study: any): DicomStudy => {
     StudyDate: formatDicomDate(studyDate),
     StudyDescription: parseDicomTag(study, "00081030"),
     AccessionNumber: parseDicomTag(study, "00080050"),
+    Modalities: modalities,
+    NumberOfSeries: numberOfSeries,
+    NumberOfInstances: numberOfInstances
   };
 };
