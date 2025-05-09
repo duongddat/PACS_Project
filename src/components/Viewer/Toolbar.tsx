@@ -37,28 +37,37 @@ const Toolbar: React.FC<ToolbarProps> = ({ viewportId }) => {
       return;
     }
 
-    const toolsToDeactivate = [
-      cornerstoneTools.WindowLevelTool.toolName,
-      cornerstoneTools.PanTool.toolName,
-      cornerstoneTools.ZoomTool.toolName,
-      cornerstoneTools.LengthTool.toolName,
-      cornerstoneTools.AngleTool.toolName,
-      cornerstoneTools.BidirectionalTool.toolName,
-      cornerstoneTools.AnnotationTool.toolName,
-      cornerstoneTools.EllipticalROITool.toolName,
-      cornerstoneTools.RectangleROITool.toolName,
-      cornerstoneTools.CircleROITool.toolName,
-      cornerstoneTools.PlanarFreehandROITool.toolName,
-      cornerstoneTools.SplineROITool.toolName,
-    ];
-
-    toolsToDeactivate.forEach((tool) => {
-      if (toolGroup.getToolInstance(tool)) {
-        toolGroup.setToolPassive(tool);
+    // Chỉ deactivate công cụ hiện tại nếu khác với công cụ mới
+    if (activeTool !== toolName) {
+      try {
+        toolGroup.setToolPassive(activeTool);
+      } catch (error) {
+        console.warn(
+          `Không thể đặt công cụ ${activeTool} thành passive:`,
+          error
+        );
       }
-    });
+    }
 
     try {
+      // Kiểm tra xem công cụ đã được thêm vào toolGroup chưa
+      if (!toolGroup.getToolInstance(toolName)) {
+        // Thêm công cụ vào toolGroup nếu chưa có
+        toolGroup.addTool(toolName);
+      }
+
+      // Cấu hình đặc biệt cho AnnotationTool
+      if (toolName === cornerstoneTools.ArrowAnnotateTool.toolName) {
+        toolGroup.setToolConfiguration(toolName, {
+          getTextCallback: (callback: any, eventDetail: any) => {
+            const text = prompt("Nhập nội dung chú thích:");
+            if (text) {
+              callback(text);
+            }
+          },
+        });
+      }
+
       toolGroup.setToolActive(toolName, {
         bindings: [{ mouseButton: 1 }],
       });
@@ -148,7 +157,7 @@ const Toolbar: React.FC<ToolbarProps> = ({ viewportId }) => {
       label: "Đo hai chiều",
     },
     {
-      name: cornerstoneTools.AnnotationTool.toolName,
+      name: cornerstoneTools.ArrowAnnotateTool.toolName,
       icon: "fas fa-comment-medical",
       title: "Chú thích",
       label: "Chú thích",

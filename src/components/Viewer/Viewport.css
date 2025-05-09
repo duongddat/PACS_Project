@@ -6,7 +6,7 @@
   overflow: hidden;
   border: 1px solid rgba(66, 153, 225, 0.5);
   border-radius: 8px;
-  flex: 1; /* Thêm dòng này để viewport mở rộng */
+  flex: 1;
 }
 
 .viewport-placeholder {
@@ -36,8 +36,8 @@
 
 .loading-spinner {
   border: 3px solid rgba(255, 255, 255, 0.3);
-  border-radius: 50%;
   border-top: 3px solid #fff;
+  border-radius: 50%;
   width: 30px;
   height: 30px;
   animation: spin 1s linear infinite;
@@ -53,7 +53,6 @@
   }
 }
 
-/* Cập nhật CSS cho thanh thước */
 .viewport-overlay {
   position: absolute;
   bottom: 10px;
@@ -63,15 +62,6 @@
   font-size: 12px;
   z-index: 5;
   pointer-events: none;
-}
-
-.image-index {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  background-color: rgba(0, 0, 0, 0.5);
-  padding: 5px 10px;
-  border-radius: 4px;
 }
 
 .vertical-scroll-container {
@@ -95,38 +85,36 @@
   height: 100%;
   background-color: rgba(255, 255, 255, 0.2);
   border-radius: 3px;
-  margin: 5px 0;
 }
 
 .vertical-scroll-indicator {
   position: absolute;
-  left: -3px;
-  width: 12px;
-  height: auto; /* Chiều cao sẽ được tính toán động */
-  background-color: rgba(66, 153, 225, 0.8);
-  border-radius: 6px;
-  box-shadow: 0 0 5px rgba(0, 0, 0, 0.5);
+  left: 0;
+  width: 100%;
+  background-color: #fff;
+  border-radius: 4px;
   transition: top 0.1s ease;
+  box-shadow: 0 0 5px rgba(0, 0, 0, 0.5);
 }
 
 .frame-count {
-  font-size: 11px;
+  font-size: 10px;
   color: white;
   text-align: center;
-  margin: 4px 0;
   font-weight: 500;
+  margin: 2px 0;
   text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.8);
 }
 
 .frame-count.top {
   position: absolute;
-  top: -20px;
+  top: 0;
   width: 100%;
 }
 
 .frame-count.bottom {
   position: absolute;
-  bottom: -20px;
+  bottom: 0;
   width: 100%;
 }
 
@@ -145,40 +133,6 @@
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
 }
 
-.frame-count {
-  font-size: 10px;
-  color: white;
-  text-align: center;
-  margin: 2px 0;
-}
-
-.frame-count.top {
-  position: absolute;
-  top: 0;
-  width: 100%;
-}
-
-.frame-count.bottom {
-  position: absolute;
-  bottom: 0;
-  width: 100%;
-}
-
-.vertical-scroll-indicator {
-  position: absolute;
-  left: 0;
-  width: 100%;
-  background-color: #fff;
-  border-radius: 4px;
-  transition: top 0.1s ease;
-}
-
-.image-counter {
-  margin-bottom: 5px;
-  font-weight: bold;
-}
-
-/* Thêm CSS cho thông tin DICOM */
 .dicom-info {
   position: absolute;
   color: #fff;
@@ -188,91 +142,30 @@
   pointer-events: none;
 }
 
+.dicom-info p {
+  margin: 3px 0;
+  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.8);
+}
+
 .dicom-info-top-left {
   top: 10px;
   left: 10px;
 }
-
 .dicom-info-top-right {
   top: 10px;
   right: 10px;
   text-align: right;
 }
-
 .dicom-info-bottom-left {
   bottom: 10px;
   left: 10px;
 }
-
-/* Thêm style cho thông tin frame ở góc dưới bên phải */
 .dicom-info-bottom-right {
   bottom: 10px;
   right: 10px;
   text-align: right;
 }
 
-/* Cải thiện thanh cuộn dọc */
-.vertical-scroll-container {
-  position: absolute;
-  top: 50px;
-  right: 10px;
-  height: calc(100% - 100px);
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  background-color: rgba(0, 0, 0, 0.5);
-  padding: 5px;
-  border-radius: 8px;
-  z-index: 5;
-  transition: opacity 0.3s ease;
-}
-
-.vertical-scroll-bar {
-  position: relative;
-  width: 6px;
-  height: 100%;
-  background-color: rgba(255, 255, 255, 0.2);
-  border-radius: 3px;
-  margin: 5px 0;
-}
-
-.vertical-scroll-indicator {
-  position: absolute;
-  left: -3px;
-  width: 12px;
-  background-color: rgba(66, 153, 225, 0.8);
-  border-radius: 6px;
-  box-shadow: 0 0 5px rgba(0, 0, 0, 0.5);
-  transition: top 0.1s ease;
-}
-
-.dicom-info p {
-  margin: 3px 0;
-  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.8);
-}
-
-/* Cải thiện thanh thước */
-.image-scroll-bar {
-  position: relative;
-  width: 100%;
-  height: 4px;
-  background-color: rgba(255, 255, 255, 0.3);
-  border-radius: 2px;
-  margin-top: 5px;
-}
-
-.image-scroll-indicator {
-  position: absolute;
-  top: -2px;
-  width: 8px;
-  height: 8px;
-  background-color: #fff;
-  border-radius: 4px;
-  transform: translateX(-50%);
-  transition: left 0.2s ease;
-}
-
-/* Thêm CSS cho các marker hướng (A, P, R, L) */
 .orientation-marker {
   position: absolute;
   color: #fff;
@@ -306,7 +199,6 @@
   transform: translateY(-50%);
 }
 
-/* Thêm CSS cho window/level info */
 .window-level-info {
   position: absolute;
   bottom: 10px;

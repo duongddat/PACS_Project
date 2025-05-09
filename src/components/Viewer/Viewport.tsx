@@ -128,7 +128,7 @@ const Viewport: React.FC<ViewportProps> = React.memo(({ id }) => {
     }
   }, []);
 
-  // Hàm để điều chỉnh hình hình hình hình hình hình hình ảnh vừa với viewport
+  // Hàm để điều chỉnh hình hình hình hình hình hình hình hình ảnh vừa với viewport
   const fitImageToViewport = useCallback(
     (stackViewport: cornerstone.StackViewport) => {
       try {
@@ -167,7 +167,7 @@ const Viewport: React.FC<ViewportProps> = React.memo(({ id }) => {
         }
       } catch (err) {
         console.error(
-          "Lỗi khi điều chỉnh hình hình hình hình hình hình hình hình ảnh vừa với viewport:",
+          "Lỗi khi điều chỉnh hình hình hình hình hình hình hình hình hình ảnh vừa với viewport:",
           err
         );
       }
@@ -208,8 +208,6 @@ const Viewport: React.FC<ViewportProps> = React.memo(({ id }) => {
         }
 
         if (!stackViewport) {
-          // Nếu viewport không tồn tại, tạo mới
-          console.log("Viewport không tồn tại, tạo mới...");
           try {
             renderingEngine.enableElement({
               viewportId,
@@ -257,10 +255,7 @@ const Viewport: React.FC<ViewportProps> = React.memo(({ id }) => {
 
         // Tải hình ảnh và trích xuất metadata
         try {
-          // Tải hình ảnh
-          const image = await cornerstone.imageLoader.loadAndCacheImage(
-            imageId
-          );
+          await cornerstone.imageLoader.loadAndCacheImage(imageId);
 
           // Trích xuất thông tin DICOM
           await extractDicomInfo(imageId);
@@ -269,7 +264,6 @@ const Viewport: React.FC<ViewportProps> = React.memo(({ id }) => {
           try {
             // Kiểm tra xem rendering engine có còn tồn tại không
             if (renderingEngine.hasBeenDestroyed) {
-              console.log("Rendering engine đã bị hủy, tạo mới...");
               renderingEngine = new cornerstone.RenderingEngine(
                 renderingEngineId
               );
@@ -316,7 +310,6 @@ const Viewport: React.FC<ViewportProps> = React.memo(({ id }) => {
                 "has been manually called to free up memory"
               )
             ) {
-              console.log("Rendering engine đã bị hủy, tạo mới...");
               renderingEngine = new cornerstone.RenderingEngine(
                 renderingEngineId
               );
@@ -367,7 +360,6 @@ const Viewport: React.FC<ViewportProps> = React.memo(({ id }) => {
     // Kiểm tra xem rendering engine có tồn tại không hoặc đã bị hủy
     let renderingEngine = cornerstone.getRenderingEngine(renderingEngineId);
     if (!renderingEngine || renderingEngine.hasBeenDestroyed) {
-      console.log("Tạo mới rendering engine...");
       renderingEngine = new cornerstone.RenderingEngine(renderingEngineId);
     }
 
@@ -411,7 +403,7 @@ const Viewport: React.FC<ViewportProps> = React.memo(({ id }) => {
       toolGroup.addTool(cornerstoneTools.AngleTool.toolName);
       toolGroup.addTool(cornerstoneTools.StackScrollTool.toolName);
       toolGroup.addTool(cornerstoneTools.BidirectionalTool.toolName);
-      toolGroup.addTool(cornerstoneTools.AnnotationTool.toolName);
+      toolGroup.addTool(cornerstoneTools.ArrowAnnotateTool.toolName);
       toolGroup.addTool(cornerstoneTools.EllipticalROITool.toolName);
       toolGroup.addTool(cornerstoneTools.CircleROITool.toolName);
       toolGroup.addTool(cornerstoneTools.PlanarFreehandROITool.toolName);
@@ -468,8 +460,6 @@ const Viewport: React.FC<ViewportProps> = React.memo(({ id }) => {
       return;
     }
 
-    // Xóa cache khi chuyển sang hình ảnh mới
-    // Chỉ xóa cache cornerstone, giữ lại metadata cache
     cornerstone.cache.purgeCache();
 
     loadAndDisplayImage(imageId);
@@ -512,7 +502,6 @@ const Viewport: React.FC<ViewportProps> = React.memo(({ id }) => {
   useEffect(() => {
     if (!viewportRef.current) return;
 
-    // Tối ưu: Sử dụng throttle thay vì debounce để trải nghiệm mượt mà hơn
     const handleWheel = throttle((event: WheelEvent) => {
       event.preventDefault();
 
@@ -554,16 +543,13 @@ const Viewport: React.FC<ViewportProps> = React.memo(({ id }) => {
     const totalFrames = viewport.imageIds.length;
     const currentFrame = viewport.currentImageIdIndex;
 
-    if (totalFrames <= 0) return { top: "0%", height: "100%" };
+    if (totalFrames <= 1) return { top: "0%", height: "100%" };
 
     // Tính chiều cao của thanh chỉ báo dựa trên số lượng frame
     const height = 100 / totalFrames;
-    
+
     // Tính vị trí top dựa trên frame hiện tại
-    // Sử dụng currentFrame / (totalFrames - 1) để đảm bảo frame cuối cùng ở vị trí 100%
-    let top = totalFrames > 1 
-      ? (currentFrame / (totalFrames - 1)) * (100 - height) 
-      : 0;
+    const top = (currentFrame / (totalFrames - 1)) * (100 - height);
 
     return {
       top: `${top}%`,
@@ -630,7 +616,8 @@ const Viewport: React.FC<ViewportProps> = React.memo(({ id }) => {
           {/* Thêm hiển thị số frame ở góc dưới bên phải */}
           <div className="dicom-info dicom-info-bottom-right">
             <p>
-              Frame: {viewport.currentImageIdIndex + 1} / {viewport.imageIds.length}
+              Frame: {viewport.currentImageIdIndex + 1} /{" "}
+              {viewport.imageIds.length}
             </p>
           </div>
 

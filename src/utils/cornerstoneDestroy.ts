@@ -26,8 +26,6 @@ export const cornerstoneDestroy = async () => {
 
     // Xóa cache
     cornerstone.cache.purgeCache();
-
-    console.log("Đã dọn dẹp tài nguyên Cornerstone");
   } catch (error) {
     console.error("Lỗi khi dọn dẹp Cornerstone:", error);
   }
