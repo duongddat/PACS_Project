@@ -128,7 +128,7 @@ const Viewport: React.FC<ViewportProps> = React.memo(({ id }) => {
     }
   }, []);
 
-  // Hàm để điều chỉnh hình ảnh vừa với viewport
+  // Hàm để điều chỉnh hình hình hình hình hình hình hình ảnh vừa với viewport
   const fitImageToViewport = useCallback(
     (stackViewport: cornerstone.StackViewport) => {
       try {
@@ -167,7 +167,7 @@ const Viewport: React.FC<ViewportProps> = React.memo(({ id }) => {
         }
       } catch (err) {
         console.error(
-          "Lỗi khi điều chỉnh hình hình ảnh vừa với viewport:",
+          "Lỗi khi điều chỉnh hình hình hình hình hình hình hình hình ảnh vừa với viewport:",
           err
         );
       }
@@ -186,31 +186,68 @@ const Viewport: React.FC<ViewportProps> = React.memo(({ id }) => {
       setIsLoading(true);
 
       try {
-        const renderingEngine =
-          cornerstone.getRenderingEngine(renderingEngineId);
-        if (!renderingEngine) {
-          throw new Error("Rendering engine không tồn tại");
+        let renderingEngine = cornerstone.getRenderingEngine(renderingEngineId);
+
+        // Kiểm tra xem rendering engine có tồn tại không hoặc đã bị hủy
+        if (!renderingEngine || renderingEngine.hasBeenDestroyed) {
+          console.log(
+            "Rendering engine không tồn tại hoặc đã bị hủy, tạo mới..."
+          );
+          renderingEngine = new cornerstone.RenderingEngine(renderingEngineId);
         }
 
         // Lưu trữ tham chiếu đến viewport hiện tại
-        let stackViewport = renderingEngine.getViewport(
-          viewportId
-        ) as cornerstone.StackViewport;
-        if (!stackViewport) {
-          // Nếu viewport không tồn tại, tạo mới
-          console.log("Viewport không tồn tại, tạo mới...");
-          renderingEngine.enableElement({
-            viewportId,
-            element: viewportRef.current,
-            type: cornerstone.Enums.ViewportType.STACK,
-          });
-
+        let stackViewport;
+        try {
           stackViewport = renderingEngine.getViewport(
             viewportId
           ) as cornerstone.StackViewport;
+        } catch (error) {
+          console.log("Không thể lấy viewport, tạo mới...");
+          stackViewport = null;
+        }
 
-          if (!stackViewport) {
-            throw new Error("Không thể tạo viewport mới");
+        if (!stackViewport) {
+          // Nếu viewport không tồn tại, tạo mới
+          console.log("Viewport không tồn tại, tạo mới...");
+          try {
+            renderingEngine.enableElement({
+              viewportId,
+              element: viewportRef.current,
+              type: cornerstone.Enums.ViewportType.STACK,
+            });
+
+            stackViewport = renderingEngine.getViewport(
+              viewportId
+            ) as cornerstone.StackViewport;
+
+            if (!stackViewport) {
+              throw new Error("Không thể tạo viewport mới");
+            }
+          } catch (error: any) {
+            console.error("Lỗi khi tạo viewport mới:", error);
+
+            // Nếu rendering engine đã bị hủy, tạo mới
+            if (
+              error.message &&
+              error.message.includes(
+                "has been manually called to free up memory"
+              )
+            ) {
+              renderingEngine = new cornerstone.RenderingEngine(
+                renderingEngineId
+              );
+              renderingEngine.enableElement({
+                viewportId,
+                element: viewportRef.current,
+                type: cornerstone.Enums.ViewportType.STACK,
+              });
+              stackViewport = renderingEngine.getViewport(
+                viewportId
+              ) as cornerstone.StackViewport;
+            } else {
+              throw error;
+            }
           }
         }
 
@@ -229,11 +266,26 @@ const Viewport: React.FC<ViewportProps> = React.memo(({ id }) => {
           await extractDicomInfo(imageId);
 
           // Kiểm tra lại viewport sau khi tải hình ảnh
-          // Sử dụng try-catch để xử lý trường hợp viewport không còn tồn tại
           try {
-            stackViewport = renderingEngine.getViewport(
-              viewportId
-            ) as cornerstone.StackViewport;
+            // Kiểm tra xem rendering engine có còn tồn tại không
+            if (renderingEngine.hasBeenDestroyed) {
+              console.log("Rendering engine đã bị hủy, tạo mới...");
+              renderingEngine = new cornerstone.RenderingEngine(
+                renderingEngineId
+              );
+              renderingEngine.enableElement({
+                viewportId,
+                element: viewportRef.current,
+                type: cornerstone.Enums.ViewportType.STACK,
+              });
+              stackViewport = renderingEngine.getViewport(
+                viewportId
+              ) as cornerstone.StackViewport;
+            } else {
+              stackViewport = renderingEngine.getViewport(
+                viewportId
+              ) as cornerstone.StackViewport;
+            }
 
             if (!stackViewport) {
               // Nếu viewport không còn tồn tại, tạo mới
@@ -252,12 +304,25 @@ const Viewport: React.FC<ViewportProps> = React.memo(({ id }) => {
             stackViewport.setStack([imageId]);
             fitImageToViewport(stackViewport);
             stackViewport.render();
-          } catch (viewportError) {
+          } catch (viewportError: any) {
             console.error(
               "Lỗi khi truy cập viewport sau khi tải hình ảnh:",
               viewportError
             );
-            // Tạo lại viewport nếu cần
+            // Kiểm tra xem lỗi có phải do rendering engine đã bị hủy không
+            if (
+              viewportError.message &&
+              viewportError.message.includes(
+                "has been manually called to free up memory"
+              )
+            ) {
+              console.log("Rendering engine đã bị hủy, tạo mới...");
+              renderingEngine = new cornerstone.RenderingEngine(
+                renderingEngineId
+              );
+            }
+
+            // Tạo lại viewport
             renderingEngine.enableElement({
               viewportId,
               element: viewportRef.current,
@@ -299,9 +364,10 @@ const Viewport: React.FC<ViewportProps> = React.memo(({ id }) => {
     // Xóa cache khi component được mount
     clearCache();
 
-    // Kích hoạt element cho cornerstone
+    // Kiểm tra xem rendering engine có tồn tại không hoặc đã bị hủy
     let renderingEngine = cornerstone.getRenderingEngine(renderingEngineId);
-    if (!renderingEngine) {
+    if (!renderingEngine || renderingEngine.hasBeenDestroyed) {
+      console.log("Tạo mới rendering engine...");
       renderingEngine = new cornerstone.RenderingEngine(renderingEngineId);
     }
 
@@ -312,10 +378,30 @@ const Viewport: React.FC<ViewportProps> = React.memo(({ id }) => {
       background: [0, 0, 0], // Đặt màu nền đen
     };
 
-    renderingEngine.enableElement(viewportInput);
+    try {
+      renderingEngine.enableElement(viewportInput);
+    } catch (error: any) {
+      console.error("Lỗi khi kích hoạt element:", error);
 
-    const toolGroup =
-      cornerstoneTools.ToolGroupManager.createToolGroup(toolGroupId);
+      // Nếu rendering engine đã bị hủy, tạo mới
+      if (
+        error.message &&
+        error.message.includes("has been manually called to free up memory")
+      ) {
+        console.log("Rendering engine đã bị hủy, tạo mới...");
+        renderingEngine = new cornerstone.RenderingEngine(renderingEngineId);
+        renderingEngine.enableElement(viewportInput);
+      }
+    }
+
+    // Kiểm tra xem tool group đã tồn tại chưa
+    let toolGroup = cornerstoneTools.ToolGroupManager.getToolGroup(toolGroupId);
+
+    if (!toolGroup) {
+      toolGroup =
+        cornerstoneTools.ToolGroupManager.createToolGroup(toolGroupId);
+    }
+
     if (toolGroup) {
       // Thêm các công cụ cần thiết
       toolGroup.addTool(cornerstoneTools.PanTool.toolName);
@@ -324,6 +410,12 @@ const Viewport: React.FC<ViewportProps> = React.memo(({ id }) => {
       toolGroup.addTool(cornerstoneTools.LengthTool.toolName);
       toolGroup.addTool(cornerstoneTools.AngleTool.toolName);
       toolGroup.addTool(cornerstoneTools.StackScrollTool.toolName);
+      toolGroup.addTool(cornerstoneTools.BidirectionalTool.toolName);
+      toolGroup.addTool(cornerstoneTools.AnnotationTool.toolName);
+      toolGroup.addTool(cornerstoneTools.EllipticalROITool.toolName);
+      toolGroup.addTool(cornerstoneTools.CircleROITool.toolName);
+      toolGroup.addTool(cornerstoneTools.PlanarFreehandROITool.toolName);
+      toolGroup.addTool(cornerstoneTools.SplineROITool.toolName);
 
       // Thiết lập công cụ mặc định
       toolGroup.setToolActive(cornerstoneTools.WindowLevelTool.toolName, {
@@ -347,12 +439,19 @@ const Viewport: React.FC<ViewportProps> = React.memo(({ id }) => {
       // Xóa cache trước khi unmount
       clearCache();
 
-      const engine = cornerstone.getRenderingEngine(renderingEngineId);
-      if (engine) {
-        engine.disableElement(viewportId);
-        engine.destroy();
+      try {
+        const engine = cornerstone.getRenderingEngine(renderingEngineId);
+        if (engine && !engine.hasBeenDestroyed) {
+          engine.disableElement(viewportId);
+          engine.destroy();
+        }
+
+        if (cornerstoneTools.ToolGroupManager.getToolGroup(toolGroupId)) {
+          cornerstoneTools.ToolGroupManager.destroyToolGroup(toolGroupId);
+        }
+      } catch (error) {
+        console.error("Lỗi khi dọn dẹp rendering engine:", error);
       }
-      cornerstoneTools.ToolGroupManager.destroyToolGroup(toolGroupId);
     };
   }, [id, renderingEngineId, viewportId, toolGroupId, clearCache]);
 
@@ -450,21 +549,29 @@ const Viewport: React.FC<ViewportProps> = React.memo(({ id }) => {
 
   // Tính toán các giá trị cho thanh thước dọc
   const scrollIndicatorStyle = useMemo(() => {
-    if (!viewport || !viewport.imageIds.length) return {};
+    if (!viewport || !viewport.imageIds?.length) return {};
 
     const totalFrames = viewport.imageIds.length;
     const currentFrame = viewport.currentImageIdIndex;
-    const position =
-      totalFrames > 1 ? (currentFrame / (totalFrames - 1)) * 100 : 0;
-    const height = Math.max(8, Math.min(20, 100 / totalFrames));
+
+    if (totalFrames <= 0) return { top: "0%", height: "100%" };
+
+    // Tính chiều cao của thanh chỉ báo dựa trên số lượng frame
+    const height = 100 / totalFrames;
+    
+    // Tính vị trí top dựa trên frame hiện tại
+    // Sử dụng currentFrame / (totalFrames - 1) để đảm bảo frame cuối cùng ở vị trí 100%
+    let top = totalFrames > 1 
+      ? (currentFrame / (totalFrames - 1)) * (100 - height) 
+      : 0;
 
     return {
-      top: `${position}%`,
+      top: `${top}%`,
       height: `${height}%`,
-      transform: `translateY(-${height / 2}%)`,
     };
-  }, [viewport?.imageIds.length, viewport?.currentImageIdIndex]);
+  }, [viewport?.imageIds?.length, viewport?.currentImageIdIndex]);
 
+  // Cập nhật phần render của component
   return (
     <div
       ref={viewportRef}
@@ -513,28 +620,23 @@ const Viewport: React.FC<ViewportProps> = React.memo(({ id }) => {
             {dicomInfo.orientation.left}
           </div>
 
-          {/* Thông tin Window/Level */}
-          <div className="window-level-info">
-            W: {dicomInfo.windowWidth} L: {dicomInfo.windowCenter}
+          {/* Thông tin window/level */}
+          <div className="dicom-info dicom-info-bottom-left">
+            <p>
+              W: {dicomInfo.windowWidth} / L: {dicomInfo.windowCenter}
+            </p>
           </div>
 
-          {/* Thông tin slice */}
+          {/* Thêm hiển thị số frame ở góc dưới bên phải */}
           <div className="dicom-info dicom-info-bottom-right">
-            I: {viewport.currentImageIdIndex + 1} (
-            {viewport.currentImageIdIndex + 1}/{viewport.imageIds.length})
+            <p>
+              Frame: {viewport.currentImageIdIndex + 1} / {viewport.imageIds.length}
+            </p>
           </div>
 
-          {/* Thanh thước dọc bên phải */}
+          {/* Thanh cuộn dọc */}
           {viewport.imageIds.length > 1 && (
-            <div
-              className="vertical-scroll-container"
-              style={{
-                width: `${Math.max(
-                  20,
-                  Math.min(40, viewport.imageIds.length / 10)
-                )}px`,
-              }}
-            >
+            <div className="vertical-scroll-container">
               <div className="vertical-scroll-bar">
                 <div
                   className="vertical-scroll-indicator"

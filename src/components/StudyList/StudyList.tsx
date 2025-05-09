@@ -2,7 +2,7 @@ import React, { useEffect, useState, useRef } from "react";
 import { Link } from "react-router-dom";
 import { DicomWebApi } from "../../api/DicomWebApi";
 import { DicomStudy } from "../../utils/dicomUtils";
-import "./StudyList.css";
+import styles from "./StudyList.module.css";
 
 interface StudyListProps {
   // Các props nếu cần
@@ -114,10 +114,10 @@ const StudyList: React.FC<StudyListProps> = () => {
   };
 
   return (
-    <div className="study-list-container dark-theme">
-      <div className="study-list-header">
+    <div className={`${styles["study-list-container"]} dark-theme`}>
+      <div className={styles["study-list-header"]}>
         <h1>Danh sách nghiên cứu</h1>
-        <p className="study-count">
+        <p className={styles["study-count"]}>
           {!loading && (
             <span>
               Tìm thấy <strong>{studies.length}</strong> nghiên cứu
@@ -129,11 +129,13 @@ const StudyList: React.FC<StudyListProps> = () => {
       {/* Thanh tìm kiếm cải tiến */}
       <div
         ref={searchBarRef}
-        className={`search-bar ${isTyping ? "typing" : ""}`}
+        className={`${styles["search-bar"]} ${
+          isTyping ? styles["typing"] : ""
+        }`}
       >
-        <form onSubmit={handleSearch} className="basic-search-form">
-          <div className="search-input-wrapper">
-            <i className="fas fa-search search-icon"></i>
+        <form onSubmit={handleSearch} className={styles["basic-search-form"]}>
+          <div className={styles["search-input-wrapper"]}>
+            <i className={`fas fa-search ${styles["search-icon"]}`}></i>
             <input
               type="text"
               name="patientName"
@@ -142,29 +144,29 @@ const StudyList: React.FC<StudyListProps> = () => {
               onFocus={handleInputFocus}
               onBlur={handleInputBlur}
               placeholder="Tìm kiếm theo tên bệnh nhân..."
-              className="basic-search-input"
+              className={styles["basic-search-input"]}
             />
             {searchParams.patientName && (
               <button
                 type="button"
-                className="clear-input-btn"
+                className={styles["clear-input-btn"]}
                 onClick={clearSearchInput}
               >
                 <i className="fas fa-times"></i>
               </button>
             )}
           </div>
-          <button type="submit" className="basic-search-btn">
+          <button type="submit" className={styles["basic-search-btn"]}>
             Tìm kiếm
           </button>
           <button
             type="button"
-            className={`advanced-search-toggle ${
-              isAdvancedSearchOpen ? "active" : ""
+            className={`${styles["advanced-search-toggle"]} ${
+              isAdvancedSearchOpen ? styles["active"] : ""
             }`}
             onClick={toggleAdvancedSearch}
           >
-            <span className="toggle-text">Tìm kiếm nâng cao</span>
+            <span className={styles["toggle-text"]}>Tìm kiếm nâng cao</span>
             <i className="fas fa-chevron-down"></i>
           </button>
         </form>
@@ -172,13 +174,16 @@ const StudyList: React.FC<StudyListProps> = () => {
 
       {/* Form tìm kiếm nâng cao có thể mở/đóng */}
       <div
-        className={`advanced-search-panel ${
-          isAdvancedSearchOpen ? "open" : ""
+        className={`${styles["advanced-search-panel"]} ${
+          isAdvancedSearchOpen ? styles["open"] : ""
         }`}
       >
-        <form onSubmit={handleSearch} className="advanced-search-form">
-          <div className="search-grid">
-            <div className="search-field">
+        <form
+          onSubmit={handleSearch}
+          className={styles["advanced-search-form"]}
+        >
+          <div className={styles["search-grid"]}>
+            <div className={styles["search-field"]}>
               <label htmlFor="patientId">ID bệnh nhân</label>
               <input
                 type="text"
@@ -190,7 +195,7 @@ const StudyList: React.FC<StudyListProps> = () => {
               />
             </div>
 
-            <div className="search-field">
+            <div className={styles["search-field"]}>
               <label htmlFor="studyDate">Ngày nghiên cứu</label>
               <input
                 type="date"
@@ -201,7 +206,7 @@ const StudyList: React.FC<StudyListProps> = () => {
               />
             </div>
 
-            <div className="search-field">
+            <div className={styles["search-field"]}>
               <label htmlFor="modality">Phương thức</label>
               <input
                 type="text"
@@ -213,7 +218,7 @@ const StudyList: React.FC<StudyListProps> = () => {
               />
             </div>
 
-            <div className="search-field">
+            <div className={styles["search-field"]}>
               <label htmlFor="accessionNumber">Số tiếp nhận</label>
               <input
                 type="text"
@@ -226,13 +231,13 @@ const StudyList: React.FC<StudyListProps> = () => {
             </div>
           </div>
 
-          <div className="advanced-search-buttons">
-            <button type="submit" className="search-button">
+          <div className={styles["advanced-search-buttons"]}>
+            <button type="submit" className={styles["search-button"]}>
               <i className="fas fa-search"></i> Áp dụng bộ lọc
             </button>
             <button
               type="button"
-              className="clear-button"
+              className={styles["clear-button"]}
               onClick={handleClearSearch}
             >
               <i className="fas fa-eraser"></i> Xóa bộ lọc
@@ -243,29 +248,29 @@ const StudyList: React.FC<StudyListProps> = () => {
 
       {/* Hiển thị lỗi nếu có */}
       {error && (
-        <div className="message error-message">
+        <div className={`${styles["message"]} ${styles["error-message"]}`}>
           <i className="fas fa-exclamation-circle"></i> {error}
         </div>
       )}
 
       {/* Hiển thị trạng thái đang tải */}
       {loading && (
-        <div className="message loading-message">
+        <div className={`${styles["message"]} ${styles["loading-message"]}`}>
           <div className="spinner"></div> Đang tải danh sách nghiên cứu...
         </div>
       )}
 
       {/* Không có kết quả */}
       {!loading && studies.length === 0 && (
-        <div className="message info-message">
+        <div className={`${styles["message"]} ${styles["info-message"]}`}>
           <i className="fas fa-info-circle"></i> Không tìm thấy nghiên cứu nào.
         </div>
       )}
 
       {/* Bảng danh sách nghiên cứu */}
       {!loading && studies.length > 0 && (
-        <div className="table-responsive">
-          <table className="studies-table">
+        <div className={styles["table-responsive"]}>
+          <table className={styles["studies-table"]}>
             <thead>
               <tr>
                 <th>Tên bệnh nhân</th>
@@ -295,7 +300,7 @@ const StudyList: React.FC<StudyListProps> = () => {
                     <td data-label="Hành động">
                       <Link
                         to={`/viewer/${studyInstanceUID}`}
-                        className="view-button"
+                        className={styles["view-button"]}
                       >
                         <i className="fas fa-eye"></i> Xem
                       </Link>

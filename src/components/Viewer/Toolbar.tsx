@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import * as cornerstone from "@cornerstonejs/core";
 import * as cornerstoneTools from "@cornerstonejs/tools";
 import { useViewportStore } from "../../store/viewportStore";
@@ -15,6 +15,9 @@ const Toolbar: React.FC<ToolbarProps> = ({ viewportId }) => {
   const [activeTool, setActiveTool] = useState<string>(
     cornerstoneTools.WindowLevelTool.toolName
   );
+  const [showDropdown, setShowDropdown] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+
   const renderingEngineId = `engine-${viewportId}`;
   const toolGroupId = `toolgroup-${viewportId}`;
 
@@ -40,6 +43,13 @@ const Toolbar: React.FC<ToolbarProps> = ({ viewportId }) => {
       cornerstoneTools.ZoomTool.toolName,
       cornerstoneTools.LengthTool.toolName,
       cornerstoneTools.AngleTool.toolName,
+      cornerstoneTools.BidirectionalTool.toolName,
+      cornerstoneTools.AnnotationTool.toolName,
+      cornerstoneTools.EllipticalROITool.toolName,
+      cornerstoneTools.RectangleROITool.toolName,
+      cornerstoneTools.CircleROITool.toolName,
+      cornerstoneTools.PlanarFreehandROITool.toolName,
+      cornerstoneTools.SplineROITool.toolName,
     ];
 
     toolsToDeactivate.forEach((tool) => {
@@ -87,7 +97,25 @@ const Toolbar: React.FC<ToolbarProps> = ({ viewportId }) => {
     stackViewport.render();
   };
 
-  const tools = [
+  // Đóng dropdown khi click ra ngoài
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (
+        dropdownRef.current &&
+        !dropdownRef.current.contains(event.target as Node)
+      ) {
+        setShowDropdown(false);
+      }
+    }
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, []);
+
+  // Công cụ chính
+  const mainTools = [
     {
       name: cornerstoneTools.WindowLevelTool.toolName,
       icon: "fas fa-adjust",
@@ -103,39 +131,116 @@ const Toolbar: React.FC<ToolbarProps> = ({ viewportId }) => {
       icon: "fas fa-search-plus",
       title: "Phóng to/thu nhỏ",
     },
+  ];
+
+  // Công cụ đo lường
+  const measurementTools = [
     {
       name: cornerstoneTools.LengthTool.toolName,
       icon: "fas fa-ruler",
       title: "Đo khoảng cách",
+      label: "Đo khoảng cách",
     },
     {
-      name: cornerstoneTools.AngleTool.toolName,
-      icon: "fas fa-ruler-combined",
-      title: "Đo góc",
+      name: cornerstoneTools.BidirectionalTool.toolName,
+      icon: "fas fa-arrows-alt-h",
+      title: "Đo hai chiều",
+      label: "Đo hai chiều",
+    },
+    {
+      name: cornerstoneTools.AnnotationTool.toolName,
+      icon: "fas fa-comment-medical",
+      title: "Chú thích",
+      label: "Chú thích",
+    },
+    {
+      name: cornerstoneTools.EllipticalROITool.toolName,
+      icon: "far fa-circle",
+      title: "Vùng ellipse",
+      label: "Vùng ellipse",
+    },
+    {
+      name: cornerstoneTools.RectangleROITool.toolName,
+      icon: "far fa-square",
+      title: "Vùng chữ nhật",
+      label: "Vùng chữ nhật",
+    },
+    {
+      name: cornerstoneTools.CircleROITool.toolName,
+      icon: "far fa-circle",
+      title: "Vùng tròn",
+      label: "Vùng tròn",
+    },
+    {
+      name: cornerstoneTools.PlanarFreehandROITool.toolName,
+      icon: "fas fa-draw-polygon",
+      title: "Vùng tự do",
+      label: "Vùng tự do",
+    },
+    {
+      name: cornerstoneTools.SplineROITool.toolName,
+      icon: "fas fa-bezier-curve",
+      title: "Đường cong spline",
+      label: "Đường cong spline",
     },
   ];
 
-  const renderToolButton = (tool: (typeof tools)[0]) => (
-    <button
-      key={tool.name}
-      className={`tool-button ${activeTool === tool.name ? "active" : ""}`}
-      title={tool.title}
-      data-tooltip-id="toolbar-tooltip"
-      data-tooltip-content={tool.title}
-      onClick={() => activateTool(tool.name)}
-    >
-      <i className={tool.icon}></i>
-    </button>
-  );
-
   return (
     <div className="toolbar">
+      {/* Nhóm công cụ cơ bản */}
       <div className="tool-group">
-        {tools.slice(0, 3).map(renderToolButton)}
+        {mainTools.map((tool) => (
+          <button
+            key={tool.name}
+            className={`tool-button ${
+              activeTool === tool.name ? "active" : ""
+            }`}
+            title={tool.title}
+            data-tooltip-id="toolbar-tooltip"
+            data-tooltip-content={tool.title}
+            onClick={() => activateTool(tool.name)}
+          >
+            <i className={tool.icon}></i>
+          </button>
+        ))}
       </div>
 
-      <div className="tool-group">{tools.slice(3).map(renderToolButton)}</div>
+      {/* Nhóm công cụ đo lường - Giữ nguyên cấu trúc nhưng thêm ref để xử lý dropdown */}
+      <div className="tool-group" ref={dropdownRef}>
+        <button
+          className={`tool-button tool-dropdown-button ${
+            showDropdown ? "active" : ""
+          }`}
+          onClick={() => setShowDropdown(!showDropdown)}
+          data-tooltip-id="toolbar-tooltip"
+          data-tooltip-content="Công cụ đo lường"
+        >
+          <i className="fas fa-pencil-alt"></i>
+          <i className="fas fa-caret-down dropdown-icon"></i>
+        </button>
 
+        {showDropdown && (
+          <div className="tool-dropdown">
+            {measurementTools.map((tool) => (
+              <div
+                key={tool.name}
+                className={`tool-dropdown-item ${
+                  activeTool === tool.name ? "active" : ""
+                }`}
+                onClick={() => {
+                  activateTool(tool.name);
+                  setShowDropdown(false);
+                }}
+              >
+                <i className={tool.icon}></i>
+                <span>{tool.label}</span>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* Các nút điều hướng */}
       <div className="tool-group">
         <button
           className="tool-button"
@@ -162,6 +267,7 @@ const Toolbar: React.FC<ToolbarProps> = ({ viewportId }) => {
         </button>
       </div>
 
+      {/* Nút đặt lại */}
       <div className="tool-group">
         <button
           className="tool-button"
@@ -174,7 +280,7 @@ const Toolbar: React.FC<ToolbarProps> = ({ viewportId }) => {
         </button>
       </div>
 
-      <Tooltip id="toolbar-tooltip" place="bottom" />
+      <Tooltip id="toolbar-tooltip" place="bottom" className="tool-tooltip" />
     </div>
   );
 };

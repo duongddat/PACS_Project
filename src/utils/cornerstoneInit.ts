@@ -18,6 +18,12 @@ export const initCornerstone = async () => {
     cornerstoneTools.addTool(cornerstoneTools.WindowLevelTool);
     cornerstoneTools.addTool(cornerstoneTools.StackScrollTool);
 
+    cornerstoneTools.addTool(cornerstoneTools.BidirectionalTool);
+    cornerstoneTools.addTool(cornerstoneTools.AnnotationTool);
+    cornerstoneTools.addTool(cornerstoneTools.EllipticalROITool);
+    cornerstoneTools.addTool(cornerstoneTools.CircleROITool);
+    cornerstoneTools.addTool(cornerstoneTools.PlanarFreehandROITool);
+    cornerstoneTools.addTool(cornerstoneTools.SplineROITool);
     // Khởi tạo DICOM Image Loader
     dicomImageLoader.init();
 
@@ -34,6 +40,12 @@ export const initCornerstone = async () => {
       toolGroup.addTool(cornerstoneTools.LengthTool.toolName);
       toolGroup.addTool(cornerstoneTools.ProbeTool.toolName);
       toolGroup.addTool(cornerstoneTools.StackScrollTool.toolName);
+      toolGroup.addTool(cornerstoneTools.BidirectionalTool.toolName);
+      toolGroup.addTool(cornerstoneTools.AnnotationTool.toolName);
+      toolGroup.addTool(cornerstoneTools.EllipticalROITool.toolName);
+      toolGroup.addTool(cornerstoneTools.CircleROITool.toolName);
+      toolGroup.addTool(cornerstoneTools.PlanarFreehandROITool.toolName);
+      toolGroup.addTool(cornerstoneTools.SplineROITool.toolName);
 
       // Thiết lập công cụ mặc định
       toolGroup.setToolActive(cornerstoneTools.WindowLevelTool.toolName, {

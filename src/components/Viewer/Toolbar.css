@@ -1,42 +1,288 @@
+/* Toolbar - giữ nguyên cấu trúc hiện tại */
 .toolbar {
   display: flex;
-  background-color: #2d2d2d;
-  padding: 5px 10px;
-  border-bottom: 1px solid #3d3d3d;
-  gap: 20px;
+  background-color: var(--dark-bg-secondary);
+  padding: 6px 10px;
+  border-bottom: 1px solid var(--dark-border-color);
+  gap: 24px;
+  box-shadow: var(--shadow-sm);
+  align-items: center;
+  flex-wrap: wrap;
+  position: relative;
+  z-index: 100;
+  margin: 5px 0;
 }
 
 .tool-group {
   display: flex;
-  gap: 5px;
+  gap: 8px;
+  position: relative;
 }
 
+.tool-group:not(:last-child)::after {
+  content: "";
+  position: absolute;
+  right: -12px;
+  top: 50%;
+  height: 24px;
+  width: 1px;
+  background-color: var(--dark-border-color);
+  transform: translateY(-50%);
+}
+
+/* Cải thiện style cho tool button */
 .tool-button {
-  background-color: #3d3d3d;
-  border: none;
-  color: #cccccc;
-  width: 36px;
-  height: 36px;
-  border-radius: 4px;
+  background-color: var(--dark-bg-tertiary);
+  border: 1px solid var(--dark-border-color);
+  color: var(--dark-text-secondary);
+  width: 40px;
+  height: 40px;
+  border-radius: var(--border-radius);
   display: flex;
   justify-content: center;
   align-items: center;
   cursor: pointer;
-  transition: background-color 0.2s, color 0.2s;
+  transition: all var(--transition-speed) var(--transition-function);
+  position: relative;
+  outline: none;
 }
 
 .tool-button:hover {
-  background-color: #4d4d4d;
-  color: #ffffff;
+  background-color: var(--dark-bg-elevated);
+  color: var(--dark-text-primary);
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-sm);
 }
 
 .tool-button.active {
-  background-color: #0078d4;
-  color: #ffffff;
+  background-color: var(--primary-bg-light);
+  color: var(--primary-color);
+  border-color: var(--primary-color);
+  box-shadow: 0 0 0 1px var(--primary-color);
+}
+
+/* Thêm hiệu ứng ripple khi click */
+.tool-button::after {
+  content: "";
+  display: block;
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  top: 0;
+  left: 0;
+  pointer-events: none;
+  background-image: radial-gradient(circle, #fff 10%, transparent 10.01%);
+  background-repeat: no-repeat;
+  background-position: 50%;
+  transform: scale(10, 10);
+  opacity: 0;
+  transition: transform 0.5s, opacity 1s;
+}
+
+.tool-button:active::after {
+  transform: scale(0, 0);
+  opacity: 0.3;
+  transition: 0s;
 }
 
 .tool-button:disabled {
-  background-color: #3d3d3d;
-  color: #666666;
+  background-color: var(--dark-bg-tertiary);
+  color: var(--dark-text-muted);
+  border-color: var(--dark-border-light);
   cursor: not-allowed;
+  opacity: 0.6;
+  transform: none;
+  box-shadow: none;
+}
+
+.tool-button svg,
+.tool-button i {
+  font-size: 16px;
+  transition: transform var(--transition-speed) var(--transition-function);
+}
+
+.tool-button:hover svg,
+.tool-button:hover i {
+  transform: scale(1.1);
+}
+
+/* Dropdown button styling */
+.tool-dropdown-button {
+  position: relative;
+}
+
+.dropdown-icon {
+  position: absolute;
+  bottom: 6px;
+  right: 6px;
+  font-size: 8px;
+  opacity: 0.7;
+}
+
+/* Cải thiện tool dropdown */
+.tool-dropdown {
+  position: absolute;
+  top: calc(100% + 5px);
+  left: 0;
+  min-width: 240px;
+  background-color: var(--dark-bg-secondary);
+  border-radius: var(--border-radius);
+  box-shadow: var(--shadow-lg);
+  z-index: 1000;
+  overflow: hidden;
+  border: 1px solid var(--dark-border-color);
+}
+
+/* Hiệu ứng mượt mà khi hiển thị dropdown */
+@keyframes dropdownFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.tool-dropdown {
+  animation: dropdownFadeIn 0.2s var(--transition-function);
+}
+
+.tool-dropdown-item {
+  display: flex;
+  align-items: center;
+  padding: 10px 16px;
+  color: var(--dark-text-secondary);
+  cursor: pointer;
+  transition: all var(--transition-speed) var(--transition-function);
+  border-left: 3px solid transparent;
+  gap: 12px;
+}
+
+.tool-dropdown-item:hover {
+  background-color: var(--dark-bg-elevated);
+  color: var(--dark-text-primary);
+}
+
+.tool-dropdown-item.active {
+  background-color: var(--primary-bg-lighter);
+  color: var(--primary-color);
+  border-left-color: var(--primary-color);
+}
+
+.tool-dropdown-item i,
+.tool-dropdown-item svg {
+  width: 16px;
+  text-align: center;
+}
+
+/* Tooltip customization */
+.tool-tooltip {
+  font-size: 12px;
+  line-height: 1.4;
+  background-color: var(--dark-bg-tertiary);
+  color: var(--dark-text-primary);
+  padding: 6px 10px;
+  border-radius: var(--border-radius-sm);
+  box-shadow: var(--shadow);
+  z-index: 1000;
+  border: 1px solid var(--dark-border-color);
+}
+
+/* Navigation controls */
+.navigation-controls {
+  display: flex;
+  gap: 8px;
+  margin-left: auto;
+  align-items: center;
+}
+
+.nav-button {
+  background-color: var(--dark-bg-tertiary);
+  border: 1px solid var(--dark-border-color);
+  color: var(--dark-text-secondary);
+  height: 40px;
+  padding: 0 16px;
+  border-radius: var(--border-radius);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  cursor: pointer;
+  transition: all var(--transition-speed) var(--transition-function);
+  font-size: 14px;
+  gap: 8px;
+  font-weight: 500;
+}
+
+.nav-button:hover {
+  background-color: var(--dark-bg-elevated);
+  color: var(--dark-text-primary);
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-sm);
+}
+
+.nav-button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+.image-counter {
+  color: var(--dark-text-primary);
+  background-color: var(--dark-bg-tertiary);
+  border-radius: var(--border-radius);
+  height: 40px;
+  padding: 0 16px;
+  border: 1px solid var(--dark-border-color);
+  display: flex;
+  align-items: center;
+  font-weight: 500;
+  font-size: 14px;
+}
+
+/* Responsive styles */
+@media (max-width: 768px) {
+  .toolbar {
+    padding: 6px;
+    gap: 16px;
+  }
+
+  .tool-group:not(:last-child)::after {
+    right: -8px;
+  }
+
+  .tool-button {
+    width: 36px;
+    height: 36px;
+  }
+
+  .tool-dropdown {
+    min-width: 200px;
+  }
+}
+
+@media (max-width: 480px) {
+  .toolbar {
+    gap: 8px;
+  }
+
+  .tool-group {
+    gap: 4px;
+  }
+
+  .tool-button {
+    width: 32px;
+    height: 32px;
+  }
+
+  .tool-button i,
+  .tool-button svg {
+    font-size: 14px;
+  }
+
+  .tool-dropdown-item {
+    padding: 8px 12px;
+  }
 }

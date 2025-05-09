@@ -21,6 +21,15 @@ export const useToolStore = create<ToolState>((set, get) => ({
     { name: 'Length', mode: 'passive' },
     { name: 'Probe', mode: 'passive' },
     { name: 'StackScroll', mode: 'passive' },
+    // Thêm các công cụ mới
+    { name: 'Bidirectional', mode: 'passive' },
+    { name: 'Annotation', mode: 'passive' },
+    { name: 'Ellipse', mode: 'passive' },
+    { name: 'Rectangle', mode: 'passive' },
+    { name: 'Circle', mode: 'passive' },
+    { name: 'FreehandRoi', mode: 'passive' },
+    { name: 'SplineRoi', mode: 'passive' },
+    { name: 'LivewireTool', mode: 'passive' },
   ],
   
   setActiveTool: (toolName) => {
