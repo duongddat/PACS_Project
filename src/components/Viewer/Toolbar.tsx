@@ -3,6 +3,7 @@ import * as cornerstone from "@cornerstonejs/core";
 import * as cornerstoneTools from "@cornerstonejs/tools";
 import { useViewportStore } from "../../store/viewportStore";
 import { Tooltip } from "react-tooltip";
+import LayoutSelector from "./LayoutSelector";
 import "./Toolbar.css";
 
 interface ToolbarProps {
@@ -289,9 +290,20 @@ const Toolbar: React.FC<ToolbarProps> = ({ viewportId }) => {
         </button>
       </div>
 
+      {/* Thêm LayoutSelector vào toolbar */}
+      <div className="tool-group">
+        <LayoutSelector />
+      </div>
+
       <Tooltip id="toolbar-tooltip" place="bottom" className="tool-tooltip" />
     </div>
   );
 };
 
 export default Toolbar;
+
+const handleLayoutChange = (layoutId: string) => {
+  // Xử lý thay đổi bố cục ở đây
+  console.log(`Đã chọn bố cục: ${layoutId}`);
+  // Gọi hàm thay đổi bố cục từ store hoặc context
+};

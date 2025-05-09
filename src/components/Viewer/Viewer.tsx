@@ -19,7 +19,7 @@ const Viewer: React.FC = () => {
   >({});
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
-  const [sidebarWidth, setSidebarWidth] = useState(250); // Thêm state cho chiều rộng sidebar
+  const [sidebarWidth, setSidebarWidth] = useState(300); // Thêm state cho chiều rộng sidebar
   const leftPanelRef = useRef<HTMLDivElement>(null); // Thêm ref cho left panel
   const resizeHandleRef = useRef<HTMLDivElement>(null); // Thêm ref cho resize handle
 
@@ -350,9 +350,6 @@ const Viewer: React.FC = () => {
                   </div>
                   <div className="thumbnail-info">
                     <p className="series-number">S:{seriesItem.SeriesNumber}</p>
-                    <p className="image-count">
-                      {seriesItem.NumberOfInstances}
-                    </p>
                   </div>
                 </div>
               ))}

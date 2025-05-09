@@ -216,7 +216,10 @@ export const DicomWebApi = {
   },
 
   // Lấy dữ liệu volume cho 3D rendering
-  getVolumeData: async (studyInstanceUID: string, seriesInstanceUID: string) => {
+  getVolumeData: async (
+    studyInstanceUID: string,
+    seriesInstanceUID: string
+  ) => {
     const instances = await DicomWebApi.getInstancesOfSeries(
       studyInstanceUID,
       seriesInstanceUID
@@ -248,7 +251,7 @@ export const DicomWebApi = {
     };
   },
 
-  // Lấy frame từ multiframe DICOM
+  // Lấy danh sách imageIds cho multiframe
   getMultiframeImageIds: async (
     studyInstanceUID: string,
     seriesInstanceUID: string,
@@ -261,7 +264,10 @@ export const DicomWebApi = {
       sopInstanceUID
     );
 
-    const numberOfFrames = parseInt(parseDicomTag(metadata[0], "00280008") || "0", 10);
+    const numberOfFrames = parseInt(
+      parseDicomTag(metadata[0], "00280008") || "0",
+      10
+    );
     const imageIds = [];
 
     // Tạo imageId cho từng frame
@@ -274,11 +280,8 @@ export const DicomWebApi = {
     return imageIds;
   },
 
-  // Kiểm tra xem series có phải là multiframe không
-  isMultiframe: async (
-    studyInstanceUID: string,
-    seriesInstanceUID: string
-  ) => {
+  // Kiểm tra xem một series có phải là multiframe không
+  isMultiframe: async (studyInstanceUID: string, seriesInstanceUID: string) => {
     const instances = await DicomWebApi.getInstancesOfSeries(
       studyInstanceUID,
       seriesInstanceUID
@@ -294,7 +297,10 @@ export const DicomWebApi = {
     );
 
     // Kiểm tra tag NumberOfFrames
-    const numberOfFrames = parseInt(parseDicomTag(metadata[0], "00280008") || "0", 10);
+    const numberOfFrames = parseInt(
+      parseDicomTag(metadata[0], "00280008") || "0",
+      10
+    );
     return numberOfFrames > 1;
-  },
+  }
 };

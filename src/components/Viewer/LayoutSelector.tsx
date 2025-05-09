@@ -1,13 +1,17 @@
 import React, { useState } from "react";
+import { useLayoutStore } from "../../store/useLayoutStore";
 import "./Toolbar.css";
 
 interface LayoutSelectorProps {
-  onLayoutChange: (layout: string) => void;
+  onLayoutChange?: (layoutId: string) => void;
 }
 
 const LayoutSelector: React.FC<LayoutSelectorProps> = ({ onLayoutChange }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [activeTab, setActiveTab] = useState("common");
+  const [hoveredCell, setHoveredCell] = useState<{row: number, col: number} | null>(null);
+  
+  const { setLayout, currentLayout } = useLayoutStore();
 
   const commonLayouts = [
     { id: "1x1", name: "1x1", icon: "grid-1x1" },
@@ -27,8 +31,49 @@ const LayoutSelector: React.FC<LayoutSelectorProps> = ({ onLayoutChange }) => {
   ];
 
   const handleLayoutSelect = (layoutId: string) => {
-    onLayoutChange(layoutId);
+    setLayout(layoutId);
+    if (onLayoutChange) {
+      onLayoutChange(layoutId);
+    }
     setIsOpen(false);
+  };
+
+  const handleCustomLayoutSelect = (rows: number, cols: number) => {
+    const layoutId = `custom-${rows}x${cols}`;
+    setLayout(layoutId);
+    if (onLayoutChange) {
+      onLayoutChange(layoutId);
+    }
+    setIsOpen(false);
+  };
+
+  const handleCellHover = (row: number, col: number) => {
+    setHoveredCell({ row, col });
+  };
+
+  const renderCustomGrid = () => {
+    const maxRows = 4;
+    const maxCols = 4;
+    const grid = [];
+
+    for (let row = 1; row <= maxRows; row++) {
+      for (let col = 1; col <= maxCols; col++) {
+        const isHighlighted = hoveredCell && 
+          row <= hoveredCell.row && 
+          col <= hoveredCell.col;
+        
+        grid.push(
+          <div
+            key={`${row}-${col}`}
+            className={`custom-grid-cell ${isHighlighted ? 'highlighted' : ''}`}
+            onMouseEnter={() => handleCellHover(row, col)}
+            onClick={() => handleCustomLayoutSelect(row, col)}
+          />
+        );
+      }
+    }
+
+    return grid;
   };
 
   return (
@@ -57,6 +102,12 @@ const LayoutSelector: React.FC<LayoutSelectorProps> = ({ onLayoutChange }) => {
             >
               Nâng cao
             </button>
+            <button
+              className={`layout-tab ${activeTab === "custom" ? "active" : ""}`}
+              onClick={() => setActiveTab("custom")}
+            >
+              Tùy chỉnh
+            </button>
           </div>
 
           <div className="layout-options">
@@ -64,10 +115,11 @@ const LayoutSelector: React.FC<LayoutSelectorProps> = ({ onLayoutChange }) => {
               commonLayouts.map((layout) => (
                 <button
                   key={layout.id}
-                  className="layout-option"
+                  className={`layout-option ${currentLayout === layout.id ? 'active' : ''}`}
                   onClick={() => handleLayoutSelect(layout.id)}
                 >
                   <div className={`layout-icon ${layout.icon}`}></div>
+                  <span>{layout.name}</span>
                 </button>
               ))}
 
@@ -75,13 +127,28 @@ const LayoutSelector: React.FC<LayoutSelectorProps> = ({ onLayoutChange }) => {
               advancedLayouts.map((layout) => (
                 <button
                   key={layout.id}
-                  className="layout-option"
+                  className={`layout-option ${currentLayout === layout.id ? 'active' : ''}`}
                   onClick={() => handleLayoutSelect(layout.id)}
                 >
                   <div className={`layout-icon ${layout.icon}`}></div>
                   <span>{layout.name}</span>
                 </button>
               ))}
+              
+            {activeTab === "custom" && (
+              <div className="custom-layout-container">
+                <div className="custom-grid-container">
+                  {renderCustomGrid()}
+                </div>
+                <div className="custom-grid-info">
+                  <p>Hover để chọn số hàng và cột</p>
+                  <p>Click để áp dụng</p>
+                  {hoveredCell && (
+                    <p className="custom-grid-size">{hoveredCell.row}x{hoveredCell.col}</p>
+                  )}
+                </div>
+              </div>
+            )}
           </div>
         </div>
       )}
