@@ -2,9 +2,11 @@ import React, { useEffect, useState, useRef, useCallback } from "react";
 import { useParams } from "react-router-dom";
 import { useStudyStore } from "../../store/studyStore";
 import { useViewportStore } from "../../store/viewportStore";
+import { useLayoutStore } from "../../store/useLayoutStore";
 import { DicomWebApi } from "../../api/DicomWebApi";
 import Viewport from "./Viewport";
 import Toolbar from "./Toolbar";
+import LayoutSelector from "./LayoutSelector";
 import "./Viewer.css";
 import { initCornerstone } from "../../utils/cornerstoneInit";
 import { cornerstoneDestroy } from "../../utils/cornerstoneDestroy";
@@ -19,9 +21,11 @@ const Viewer: React.FC = () => {
   >({});
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
-  const [sidebarWidth, setSidebarWidth] = useState(300); // Thêm state cho chiều rộng sidebar
-  const leftPanelRef = useRef<HTMLDivElement>(null); // Thêm ref cho left panel
-  const resizeHandleRef = useRef<HTMLDivElement>(null); // Thêm ref cho resize handle
+  const [sidebarWidth, setSidebarWidth] = useState(300);
+  const leftPanelRef = useRef<HTMLDivElement>(null);
+  const resizeHandleRef = useRef<HTMLDivElement>(null);
+  // Thêm ref để theo dõi layout trước đó
+  const prevLayoutRef = useRef<string | null>(null);
 
   const {
     fetchSeriesForStudy,
@@ -36,7 +40,14 @@ const Viewer: React.FC = () => {
     addViewport,
     loadImagesForViewport,
     setActiveViewport: setActiveViewportInStore,
+    removeViewport,
+    viewports,
   } = useViewportStore();
+
+  // Lấy cấu hình layout từ useLayoutStore
+  const { currentLayout, getViewportConfiguration, setLayout } =
+    useLayoutStore();
+  const { rows, cols, viewports: viewportConfig } = getViewportConfiguration();
 
   // Khởi tạo Cornerstone khi component được mount
   useEffect(() => {
@@ -67,15 +78,63 @@ const Viewer: React.FC = () => {
     }
   }, [studyInstanceUID, fetchStudyByUID, fetchSeriesForStudy]);
 
-  // Khởi tạo viewport
+  // Khởi tạo viewport dựa trên cấu hình layout
   useEffect(() => {
     // Chỉ tạo viewport khi Cornerstone đã được khởi tạo
     if (cornerstoneInitialized) {
-      // Tạo viewport mặc định
-      addViewport("viewport-1", "cornerstone-engine");
-      setActiveViewportInStore("viewport-1");
+      try {
+        // Kiểm tra nếu layout đã thay đổi
+        if (prevLayoutRef.current !== currentLayout) {
+          prevLayoutRef.current = currentLayout;
+
+          // Xóa các viewport hiện tại trước khi tạo mới
+          Object.keys(viewports).forEach((id) => {
+            removeViewport(id);
+          });
+
+          // Tạo các viewport mới dựa trên cấu hình
+          viewportConfig.forEach((vpConfig) => {
+            // Bỏ qua viewport bị ẩn
+            if (
+              vpConfig.span &&
+              (vpConfig.span[0] === 0 || vpConfig.span[1] === 0)
+            ) {
+              return;
+            }
+            addViewport(vpConfig.id, "cornerstone-engine");
+          });
+
+          // Đặt viewport đầu tiên làm active nếu có viewport
+          if (viewportConfig.length > 0) {
+            // Lọc ra các viewport không bị ẩn
+            const visibleViewports = viewportConfig.filter(
+              (vpConfig) =>
+                !(
+                  vpConfig.span &&
+                  (vpConfig.span[0] === 0 || vpConfig.span[1] === 0)
+                )
+            );
+
+            if (visibleViewports.length > 0) {
+              const firstViewportId = visibleViewports[0].id;
+              setActiveViewport(firstViewportId);
+              setActiveViewportInStore(firstViewportId);
+            }
+          }
+        }
+      } catch (error) {
+        console.error("Lỗi khi khởi tạo viewport:", error);
+      }
     }
-  }, [addViewport, setActiveViewportInStore, cornerstoneInitialized]);
+  }, [
+    addViewport,
+    removeViewport,
+    setActiveViewportInStore,
+    cornerstoneInitialized,
+    viewportConfig,
+    viewports,
+    currentLayout,
+  ]);
 
   // Tải hình ảnh khi series được chọn
   useEffect(() => {
@@ -190,22 +249,49 @@ const Viewer: React.FC = () => {
         URL.revokeObjectURL(url);
       });
     };
-  }, [series, studyInstanceUID, loadSeriesThumbnails]); // Thêm studyInstanceUID vào dependency array
+  }, [series, studyInstanceUID, loadSeriesThumbnails]);
 
   // Hàm xử lý khi chọn series
   const handleSeriesSelect = useCallback(
     async (selectedSeries: Series) => {
+      // Kiểm tra nếu series đã được chọn, không làm gì cả
+      if (
+        currentSeries?.SeriesInstanceUID === selectedSeries.SeriesInstanceUID
+      ) {
+        return;
+      }
+
       setCurrentSeries(selectedSeries);
 
       if (studyInstanceUID) {
-        await loadImagesForViewport(
-          activeViewport,
-          studyInstanceUID,
-          selectedSeries.SeriesInstanceUID
-        );
+        // Tải hình ảnh cho tất cả viewport hiện tại
+        const loadPromises = viewportConfig
+          .filter(
+            (vpConfig) =>
+              !(
+                vpConfig.span &&
+                (vpConfig.span[0] === 0 || vpConfig.span[1] === 0)
+              )
+          )
+          .map((vpConfig) =>
+            loadImagesForViewport(
+              vpConfig.id,
+              studyInstanceUID,
+              selectedSeries.SeriesInstanceUID
+            )
+          );
+
+        // Đợi tất cả viewport tải xong
+        await Promise.all(loadPromises);
       }
     },
-    [studyInstanceUID, activeViewport, loadImagesForViewport, setCurrentSeries]
+    [
+      studyInstanceUID,
+      viewportConfig,
+      loadImagesForViewport,
+      setCurrentSeries,
+      currentSeries,
+    ]
   );
 
   // Hàm xử lý đóng/mở sidebar
@@ -213,17 +299,35 @@ const Viewer: React.FC = () => {
     setIsSidebarCollapsed((prev) => !prev);
   }, []);
 
+  // Hàm xử lý khi thay đổi layout
+  const handleLayoutChange = useCallback(
+    (layoutId: string) => {
+      setLayout(layoutId);
+    },
+    [setLayout]
+  );
+
+  // Hàm xử lý khi click vào viewport
+  const handleViewportClick = useCallback(
+    (viewportId: string) => {
+      setActiveViewport(viewportId);
+      setActiveViewportInStore(viewportId);
+    },
+    [setActiveViewportInStore]
+  );
+
   // Thêm useEffect để xử lý resize và tự động thu sidebar trên mobile
   useEffect(() => {
     // Kiểm tra nếu là thiết bị di động
     const checkMobile = () => {
-      const isMobile = window.innerWidth <= 768;
-      if (isMobile) {
-        setIsSidebarCollapsed(true);
-        setIsMobile(true);
-      } else {
-        setIsSidebarCollapsed(false);
-        setIsMobile(false);
+      const newIsMobile = window.innerWidth <= 768;
+      if (newIsMobile !== isMobile) {
+        setIsMobile(newIsMobile);
+        if (newIsMobile) {
+          setIsSidebarCollapsed(true);
+        } else {
+          setIsSidebarCollapsed(false);
+        }
       }
     };
 
@@ -236,7 +340,7 @@ const Viewer: React.FC = () => {
     return () => {
       window.removeEventListener("resize", checkMobile);
     };
-  }, [isMobile]); // Thêm isMobile vào dependency array
+  }, []); // Bỏ isMobile khỏi dependency array để tránh vòng lặp
 
   // Thêm chức năng resize sidebar
   useEffect(() => {
@@ -289,7 +393,53 @@ const Viewer: React.FC = () => {
       document.removeEventListener("mousemove", onMouseMove);
       document.removeEventListener("mouseup", onMouseUp);
     };
-  }, [isSidebarCollapsed]); // Thêm isSidebarCollapsed vào dependency array
+  }, [isSidebarCollapsed]);
+
+  // Hàm render các viewport theo cấu hình layout
+  const renderViewports = () => {
+    return (
+      <div
+        className="viewport-grid"
+        style={{
+          display: "grid",
+          gridTemplateRows: `repeat(${rows}, 1fr)`,
+          gridTemplateColumns: `repeat(${cols}, 1fr)`,
+          height: "calc(100% - 68px)",
+          gap: "2px",
+        }}
+      >
+        {viewportConfig.map((vpConfig) => {
+          // Bỏ qua viewport bị ẩn
+          if (
+            vpConfig.span &&
+            (vpConfig.span[0] === 0 || vpConfig.span[1] === 0)
+          ) {
+            return null;
+          }
+
+          return (
+            <div
+              key={vpConfig.id}
+              style={{
+                gridRow: `${vpConfig.position[0] + 1} / span ${
+                  vpConfig.span ? vpConfig.span[0] : 1
+                }`,
+                gridColumn: `${vpConfig.position[1] + 1} / span ${
+                  vpConfig.span ? vpConfig.span[1] : 1
+                }`,
+              }}
+              onClick={() => handleViewportClick(vpConfig.id)}
+              className={`viewport-container ${
+                activeViewport === vpConfig.id ? "active" : ""
+              }`}
+            >
+              <Viewport id={vpConfig.id} />
+            </div>
+          );
+        })}
+      </div>
+    );
+  };
 
   // Cập nhật phần render series thumbnails
   return (
@@ -378,8 +528,10 @@ const Viewer: React.FC = () => {
 
           {cornerstoneInitialized ? (
             <>
-              <Toolbar viewportId={activeViewport} />
-              <Viewport id={activeViewport} />
+              <Toolbar viewportId={activeViewport}>
+                <LayoutSelector onLayoutChange={handleLayoutChange} />
+              </Toolbar>
+              {renderViewports()}
             </>
           ) : (
             <div className="loading-container">

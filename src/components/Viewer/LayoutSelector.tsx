@@ -31,20 +31,35 @@ const LayoutSelector: React.FC<LayoutSelectorProps> = ({ onLayoutChange }) => {
   ];
 
   const handleLayoutSelect = (layoutId: string) => {
-    setLayout(layoutId);
-    if (onLayoutChange) {
-      onLayoutChange(layoutId);
+    try {
+      setLayout(layoutId);
+      if (onLayoutChange) {
+        onLayoutChange(layoutId);
+      }
+    } catch (error) {
+      console.error("Lỗi khi chọn layout:", error);
+    } finally {
+      setIsOpen(false);
     }
-    setIsOpen(false);
   };
 
   const handleCustomLayoutSelect = (rows: number, cols: number) => {
-    const layoutId = `custom-${rows}x${cols}`;
-    setLayout(layoutId);
-    if (onLayoutChange) {
-      onLayoutChange(layoutId);
+    try {
+      if (rows <= 0 || cols <= 0 || rows > 10 || cols > 10) {
+        console.error("Kích thước layout không hợp lệ:", rows, cols);
+        return;
+      }
+      
+      const layoutId = `custom-${rows}x${cols}`;
+      setLayout(layoutId);
+      if (onLayoutChange) {
+        onLayoutChange(layoutId);
+      }
+    } catch (error) {
+      console.error("Lỗi khi chọn layout tùy chỉnh:", error);
+    } finally {
+      setIsOpen(false);
     }
-    setIsOpen(false);
   };
 
   const handleCellHover = (row: number, col: number) => {
@@ -94,19 +109,13 @@ const LayoutSelector: React.FC<LayoutSelectorProps> = ({ onLayoutChange }) => {
               className={`layout-tab ${activeTab === "common" ? "active" : ""}`}
               onClick={() => setActiveTab("common")}
             >
-              Phổ biến
-            </button>
-            <button
-              className={`layout-tab ${activeTab === "advanced" ? "active" : ""}`}
-              onClick={() => setActiveTab("advanced")}
-            >
-              Nâng cao
+              Common
             </button>
             <button
               className={`layout-tab ${activeTab === "custom" ? "active" : ""}`}
               onClick={() => setActiveTab("custom")}
             >
-              Tùy chỉnh
+              Custom
             </button>
           </div>
 
@@ -119,30 +128,17 @@ const LayoutSelector: React.FC<LayoutSelectorProps> = ({ onLayoutChange }) => {
                   onClick={() => handleLayoutSelect(layout.id)}
                 >
                   <div className={`layout-icon ${layout.icon}`}></div>
-                  <span>{layout.name}</span>
                 </button>
               ))}
 
-            {activeTab === "advanced" &&
-              advancedLayouts.map((layout) => (
-                <button
-                  key={layout.id}
-                  className={`layout-option ${currentLayout === layout.id ? 'active' : ''}`}
-                  onClick={() => handleLayoutSelect(layout.id)}
-                >
-                  <div className={`layout-icon ${layout.icon}`}></div>
-                  <span>{layout.name}</span>
-                </button>
-              ))}
-              
             {activeTab === "custom" && (
               <div className="custom-layout-container">
                 <div className="custom-grid-container">
                   {renderCustomGrid()}
                 </div>
                 <div className="custom-grid-info">
-                  <p>Hover để chọn số hàng và cột</p>
-                  <p>Click để áp dụng</p>
+                  <p>Hover to select rows and columns</p>
+                  <p>Click to apply</p>
                   {hoveredCell && (
                     <p className="custom-grid-size">{hoveredCell.row}x{hoveredCell.col}</p>
                   )}

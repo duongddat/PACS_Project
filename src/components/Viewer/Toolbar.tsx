@@ -3,14 +3,14 @@ import * as cornerstone from "@cornerstonejs/core";
 import * as cornerstoneTools from "@cornerstonejs/tools";
 import { useViewportStore } from "../../store/viewportStore";
 import { Tooltip } from "react-tooltip";
-import LayoutSelector from "./LayoutSelector";
 import "./Toolbar.css";
 
 interface ToolbarProps {
   viewportId: string;
+  children?: React.ReactNode; // Thêm prop children
 }
 
-const Toolbar: React.FC<ToolbarProps> = ({ viewportId }) => {
+const Toolbar: React.FC<ToolbarProps> = ({ viewportId, children }) => {
   const { viewports, nextImage, previousImage } = useViewportStore();
   const viewport = viewports[viewportId];
   const [activeTool, setActiveTool] = useState<string>(
@@ -31,51 +31,55 @@ const Toolbar: React.FC<ToolbarProps> = ({ viewportId }) => {
 
   // Kích hoạt công cụ
   const activateTool = (toolName: string) => {
-    const toolGroup =
-      cornerstoneTools.ToolGroupManager.getToolGroup(toolGroupId);
-    if (!toolGroup) {
-      console.error(`Không tìm thấy toolGroup với ID: ${toolGroupId}`);
-      return;
-    }
-
-    // Chỉ deactivate công cụ hiện tại nếu khác với công cụ mới
-    if (activeTool !== toolName) {
-      try {
-        toolGroup.setToolPassive(activeTool);
-      } catch (error) {
-        console.warn(
-          `Không thể đặt công cụ ${activeTool} thành passive:`,
-          error
-        );
-      }
-    }
-
     try {
-      // Kiểm tra xem công cụ đã được thêm vào toolGroup chưa
-      if (!toolGroup.getToolInstance(toolName)) {
-        // Thêm công cụ vào toolGroup nếu chưa có
-        toolGroup.addTool(toolName);
+      const toolGroup =
+        cornerstoneTools.ToolGroupManager.getToolGroup(toolGroupId);
+      if (!toolGroup) {
+        console.error(`Không tìm thấy toolGroup với ID: ${toolGroupId}`);
+        return;
       }
 
-      // Cấu hình đặc biệt cho AnnotationTool
-      if (toolName === cornerstoneTools.ArrowAnnotateTool.toolName) {
-        toolGroup.setToolConfiguration(toolName, {
-          getTextCallback: (callback: any, eventDetail: any) => {
-            const text = prompt("Nhập nội dung chú thích:");
-            if (text) {
-              callback(text);
-            }
-          },
+      // Chỉ deactivate công cụ hiện tại nếu khác với công cụ mới
+      if (activeTool !== toolName) {
+        try {
+          toolGroup.setToolPassive(activeTool);
+        } catch (error) {
+          console.warn(
+            `Không thể đặt công cụ ${activeTool} thành passive:`,
+            error
+          );
+        }
+      }
+
+      try {
+        // Kiểm tra xem công cụ đã được thêm vào toolGroup chưa
+        if (!toolGroup.getToolInstance(toolName)) {
+          // Thêm công cụ vào toolGroup nếu chưa có
+          toolGroup.addTool(toolName);
+        }
+
+        // Cấu hình đặc biệt cho AnnotationTool
+        if (toolName === cornerstoneTools.ArrowAnnotateTool.toolName) {
+          toolGroup.setToolConfiguration(toolName, {
+            getTextCallback: (callback: any, eventDetail: any) => {
+              const text = prompt("Nhập nội dung chú thích:");
+              if (text) {
+                callback(text);
+              }
+            },
+          });
+        }
+
+        toolGroup.setToolActive(toolName, {
+          bindings: [{ mouseButton: 1 }],
         });
+        setActiveTool(toolName);
+        console.log(`Đã kích hoạt công cụ: ${toolName}`);
+      } catch (error) {
+        console.error(`Lỗi khi kích hoạt công cụ ${toolName}:`, error);
       }
-
-      toolGroup.setToolActive(toolName, {
-        bindings: [{ mouseButton: 1 }],
-      });
-      setActiveTool(toolName);
-      console.log(`Đã kích hoạt công cụ: ${toolName}`);
     } catch (error) {
-      console.error(`Lỗi khi kích hoạt công cụ ${toolName}:`, error);
+      console.error("Lỗi khi xử lý công cụ:", error);
     }
   };
 
@@ -292,7 +296,7 @@ const Toolbar: React.FC<ToolbarProps> = ({ viewportId }) => {
 
       {/* Thêm LayoutSelector vào toolbar */}
       <div className="tool-group">
-        <LayoutSelector />
+        {children} {/* Render children (LayoutSelector) ở đây */}
       </div>
 
       <Tooltip id="toolbar-tooltip" place="bottom" className="tool-tooltip" />
@@ -301,9 +305,3 @@ const Toolbar: React.FC<ToolbarProps> = ({ viewportId }) => {
 };
 
 export default Toolbar;
-
-const handleLayoutChange = (layoutId: string) => {
-  // Xử lý thay đổi bố cục ở đây
-  console.log(`Đã chọn bố cục: ${layoutId}`);
-  // Gọi hàm thay đổi bố cục từ store hoặc context
-};

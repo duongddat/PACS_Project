@@ -299,7 +299,7 @@
 
 .viewport-grid {
   width: 100%;
-  height: calc(100% - 60px);
+  height: calc(100% - 80px);
   display: grid;
   gap: 2px;
   background-color: var(--dark-bg-primary);
