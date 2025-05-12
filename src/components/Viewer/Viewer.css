@@ -140,12 +140,12 @@
 }
 
 .series-thumbnails {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
-  gap: 12px;
-  padding: 12px;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
   overflow-y: auto;
-  flex: 1;
+  padding: 8px;
+  gap: 8px;
 }
 
 .series-thumbnail {
@@ -158,8 +158,8 @@
   transition: all 0.2s ease;
   border: 2px solid transparent;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
-  max-height: 140px;
-  max-width: 135px;
+  height: 140px;
+  width: 135px;
 }
 
 .series-thumbnail:hover {

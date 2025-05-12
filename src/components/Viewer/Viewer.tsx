@@ -306,30 +306,17 @@ const Viewer: React.FC = () => {
         // Xóa cache trước khi tải series mới
         forceRefreshViewports();
 
-        // Tải hình ảnh cho tất cả viewport hiện tại
-        const loadPromises = viewportConfig
-          .filter(
-            (vpConfig) =>
-              !(
-                vpConfig.span &&
-                (vpConfig.span[0] === 0 || vpConfig.span[1] === 0)
-              )
-          )
-          .map((vpConfig) =>
-            loadImagesForViewport(
-              vpConfig.id,
-              studyInstanceUID,
-              selectedSeries.SeriesInstanceUID
-            )
-          );
-
-        // Đợi tất cả viewport tải xong
-        await Promise.all(loadPromises);
+        // Chỉ tải hình ảnh cho viewport đang được chọn
+        await loadImagesForViewport(
+          activeViewport,
+          studyInstanceUID,
+          selectedSeries.SeriesInstanceUID
+        );
       }
     },
     [
       studyInstanceUID,
-      viewportConfig,
+      activeViewport,
       loadImagesForViewport,
       setCurrentSeries,
       currentSeries,
