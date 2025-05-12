@@ -18,7 +18,123 @@ import { cornerstoneDestroy } from "../../utils/cornerstoneDestroy";
 import { Series } from "../../api/types";
 import "./Viewer.css";
 
-const Viewer: React.FC = () => {
+// Define interfaces for component props
+interface SeriesThumbnailProps {
+  seriesItem: Series;
+  isActive: boolean;
+  thumbnailUrl?: string;
+  onSelect: () => void;
+}
+
+// Tạo component con để hiển thị series thumbnail
+const SeriesThumbnail = React.memo(
+  ({ seriesItem, isActive, thumbnailUrl, onSelect }: SeriesThumbnailProps) => {
+    return (
+      <div
+        className={`series-thumbnail ${isActive ? "active" : ""}`}
+        onClick={onSelect}
+        data-modality={seriesItem.Modality}
+      >
+        <div className="thumbnail-container">
+          {thumbnailUrl ? (
+            <img
+              src={thumbnailUrl}
+              alt={`Series ${seriesItem.SeriesNumber}`}
+              className="thumbnail-image"
+            />
+          ) : (
+            <div className="loading-spinner"></div>
+          )}
+          <div className="modality-badge">{seriesItem.Modality}</div>
+        </div>
+        <div className="thumbnail-info">
+          <p className="series-number">S:{seriesItem.SeriesNumber}</p>
+          <div
+            className="series-description"
+            title={seriesItem.SeriesDescription}
+          >
+            {seriesItem.SeriesDescription}
+          </div>
+        </div>
+      </div>
+    );
+  }
+);
+
+// Define interface for ViewportGrid props
+interface ViewportGridProps {
+  rows: number;
+  cols: number;
+  viewportConfig: Array<{
+    id: string;
+    position: [number, number];
+    span?: [number, number];
+  }>;
+  activeViewport: string;
+  onViewportClick: (viewportId: string) => void;
+  layoutChangeTimestamp: number;
+}
+
+// Tạo component con để hiển thị viewports
+const ViewportGrid = React.memo(
+  ({
+    rows,
+    cols,
+    viewportConfig,
+    activeViewport,
+    onViewportClick,
+    layoutChangeTimestamp,
+  }: ViewportGridProps) => {
+    return (
+      <div
+        className="viewport-grid"
+        style={{
+          display: "grid",
+          gridTemplateRows: `repeat(${rows}, 1fr)`,
+          gridTemplateColumns: `repeat(${cols}, 1fr)`,
+          height: "calc(100% - 68px)",
+          gap: "2px",
+        }}
+      >
+        {viewportConfig.map((vpConfig) => {
+          // Bỏ qua viewport bị ẩn
+          if (
+            vpConfig.span &&
+            (vpConfig.span[0] === 0 || vpConfig.span[1] === 0)
+          ) {
+            return null;
+          }
+
+          return (
+            <div
+              key={vpConfig.id}
+              style={{
+                gridRow: `${vpConfig.position[0] + 1} / span ${
+                  vpConfig.span ? vpConfig.span[0] : 1
+                }`,
+                gridColumn: `${vpConfig.position[1] + 1} / span ${
+                  vpConfig.span ? vpConfig.span[1] : 1
+                }`,
+              }}
+              onClick={() => onViewportClick(vpConfig.id)}
+              className={`viewport-container ${
+                activeViewport === vpConfig.id ? "active" : ""
+              }`}
+            >
+              <Viewport
+                id={vpConfig.id}
+                key={`${vpConfig.id}-${layoutChangeTimestamp}`}
+              />
+            </div>
+          );
+        })}
+      </div>
+    );
+  }
+);
+
+// Bọc component Viewer trong React.memo để tránh render lại không cần thiết
+const Viewer = React.memo(() => {
   const { studyInstanceUID } = useParams<{ studyInstanceUID: string }>();
   const [activeViewport, setActiveViewport] = useState("viewport-1");
   const [cornerstoneInitialized, setCornerstoneInitialized] = useState(false);
@@ -292,7 +408,7 @@ const Viewer: React.FC = () => {
 
   // Hàm xử lý khi chọn series
   const handleSeriesSelect = useCallback(
-    async (selectedSeries: Series) => {
+    (selectedSeries: Series) => {
       // Kiểm tra nếu series đã được chọn, không làm gì cả
       if (
         currentSeries?.SeriesInstanceUID === selectedSeries.SeriesInstanceUID
@@ -307,7 +423,7 @@ const Viewer: React.FC = () => {
         forceRefreshViewports();
 
         // Chỉ tải hình ảnh cho viewport đang được chọn
-        await loadImagesForViewport(
+        loadImagesForViewport(
           activeViewport,
           studyInstanceUID,
           selectedSeries.SeriesInstanceUID
@@ -430,61 +546,20 @@ const Viewer: React.FC = () => {
     };
   }, [isSidebarCollapsed]);
 
-  // Hàm render các viewport theo cấu hình layout - tối ưu với useMemo
-  const renderViewports = useMemo(() => {
-    return (
-      <div
-        className="viewport-grid"
-        style={{
-          display: "grid",
-          gridTemplateRows: `repeat(${rows}, 1fr)`,
-          gridTemplateColumns: `repeat(${cols}, 1fr)`,
-          height: "calc(100% - 68px)",
-          gap: "2px",
-        }}
-      >
-        {viewportConfig.map((vpConfig) => {
-          // Bỏ qua viewport bị ẩn
-          if (
-            vpConfig.span &&
-            (vpConfig.span[0] === 0 || vpConfig.span[1] === 0)
-          ) {
-            return null;
-          }
-
-          return (
-            <div
-              key={vpConfig.id}
-              style={{
-                gridRow: `${vpConfig.position[0] + 1} / span ${
-                  vpConfig.span ? vpConfig.span[0] : 1
-                }`,
-                gridColumn: `${vpConfig.position[1] + 1} / span ${
-                  vpConfig.span ? vpConfig.span[1] : 1
-                }`,
-              }}
-              onClick={() => handleViewportClick(vpConfig.id)}
-              className={`viewport-container ${
-                activeViewport === vpConfig.id ? "active" : ""
-              }`}
-            >
-              <Viewport
-                id={vpConfig.id}
-                key={`${vpConfig.id}-${layoutChangeTimestamp}`}
-              />
-            </div>
-          );
-        })}
-      </div>
-    );
-  }, [
-    rows,
-    cols,
-    viewportConfig,
-    activeViewport,
-    handleViewportClick,
-    layoutChangeTimestamp,
-  ]);
+  // Tạo hàm memoized để render series thumbnails
+  const renderSeriesThumbnails = useMemo(() => {
+    return series.map((seriesItem) => (
+      <SeriesThumbnail
+        key={seriesItem.SeriesInstanceUID}
+        seriesItem={seriesItem}
+        isActive={
+          currentSeries?.SeriesInstanceUID === seriesItem.SeriesInstanceUID
+        }
+        thumbnailUrl={seriesThumbnails[seriesItem.SeriesInstanceUID]}
+        onSelect={() => handleSeriesSelect(seriesItem)}
+      />
+    ));
+  }, [series, currentSeries, seriesThumbnails, handleSeriesSelect]);
 
   // Cập nhật phần render series thumbnails
   return (
@@ -518,37 +593,7 @@ const Viewer: React.FC = () => {
                 <span>&#10094;</span>
               </button>
             </div>
-            <div className="series-thumbnails">
-              {series.map((seriesItem) => (
-                <div
-                  key={seriesItem.SeriesInstanceUID}
-                  className={`series-thumbnail ${
-                    currentSeries?.SeriesInstanceUID ===
-                    seriesItem.SeriesInstanceUID
-                      ? "active"
-                      : ""
-                  }`}
-                  onClick={() => handleSeriesSelect(seriesItem)}
-                  data-modality={seriesItem.Modality}
-                >
-                  <div className="thumbnail-container">
-                    {seriesThumbnails[seriesItem.SeriesInstanceUID] ? (
-                      <img
-                        src={seriesThumbnails[seriesItem.SeriesInstanceUID]}
-                        alt={`Series ${seriesItem.SeriesNumber}`}
-                        className="thumbnail-image"
-                      />
-                    ) : (
-                      <div className="loading-spinner"></div>
-                    )}
-                    <div className="modality-badge">{seriesItem.Modality}</div>
-                  </div>
-                  <div className="thumbnail-info">
-                    <p className="series-number">S:{seriesItem.SeriesNumber}</p>
-                  </div>
-                </div>
-              ))}
-            </div>
+            <div className="series-thumbnails">{renderSeriesThumbnails}</div>
           </div>
           {!isSidebarCollapsed && (
             <div ref={resizeHandleRef} className="resize-handle"></div>
@@ -576,7 +621,14 @@ const Viewer: React.FC = () => {
               <Toolbar viewportId={activeViewport}>
                 <LayoutSelector onLayoutChange={handleLayoutChange} />
               </Toolbar>
-              {renderViewports}
+              <ViewportGrid
+                rows={rows}
+                cols={cols}
+                viewportConfig={viewportConfig}
+                activeViewport={activeViewport}
+                onViewportClick={handleViewportClick}
+                layoutChangeTimestamp={layoutChangeTimestamp}
+              />
             </>
           ) : (
             <div className="loading-container">
@@ -588,6 +640,6 @@ const Viewer: React.FC = () => {
       </div>
     </div>
   );
-};
+});
 
 export default Viewer;

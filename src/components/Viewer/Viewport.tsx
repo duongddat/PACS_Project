@@ -151,7 +151,7 @@ const Viewport: React.FC<ViewportProps> = React.memo(({ id }) => {
         const heightRatio = viewportHeight / imageHeight;
 
         // Chọn tỷ lệ nhỏ hơn để đảm bảo hình ảnh vừa với viewport
-        const scale = Math.min(widthRatio, heightRatio) * 0.9; // Giảm xuống 90% để có khoảng cách xung quanh
+        const scale = Math.min(widthRatio, heightRatio) * 0.9;
 
         // Thiết lập camera với tỷ lệ mới
         const camera = stackViewport.getCamera();
@@ -166,10 +166,7 @@ const Viewport: React.FC<ViewportProps> = React.memo(({ id }) => {
           stackViewport.resetProperties();
         }
       } catch (err) {
-        console.error(
-          "Lỗi khi điều chỉnh hình hình hình hình hình hình hình hình hình hình hình hình ảnh vừa với viewport:",
-          err
-        );
+        console.error("Lỗi khi điều chỉnh hình ảnh vừa với viewport:", err);
       }
     },
     []
