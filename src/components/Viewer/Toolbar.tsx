@@ -1,6 +1,19 @@
 import React, { useState, useEffect, useRef } from "react";
-import * as cornerstone from "@cornerstonejs/core";
-import * as cornerstoneTools from "@cornerstonejs/tools";
+import { getRenderingEngine, StackViewport } from "@cornerstonejs/core";
+import {
+  ArrowAnnotateTool,
+  BidirectionalTool,
+  CircleROITool,
+  EllipticalROITool,
+  LengthTool,
+  PanTool,
+  PlanarFreehandROITool,
+  RectangleROITool,
+  SplineROITool,
+  ToolGroupManager,
+  WindowLevelTool,
+  ZoomTool,
+} from "@cornerstonejs/tools";
 import { useViewportStore } from "../../store/viewportStore";
 import { Tooltip } from "react-tooltip";
 import "./Toolbar.css";
@@ -14,7 +27,7 @@ const Toolbar: React.FC<ToolbarProps> = ({ viewportId, children }) => {
   const { viewports, nextImage, previousImage } = useViewportStore();
   const viewport = viewports[viewportId];
   const [activeTool, setActiveTool] = useState<string>(
-    cornerstoneTools.WindowLevelTool.toolName
+    WindowLevelTool.toolName
   );
   const [showDropdown, setShowDropdown] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
@@ -24,16 +37,15 @@ const Toolbar: React.FC<ToolbarProps> = ({ viewportId, children }) => {
 
   // Đảm bảo các công cụ được đăng ký khi component được mount
   useEffect(() => {
-    if (!cornerstoneTools.ToolGroupManager.getToolGroup(toolGroupId)) return;
+    if (!ToolGroupManager.getToolGroup(toolGroupId)) return;
 
-    activateTool(cornerstoneTools.WindowLevelTool.toolName);
+    activateTool(WindowLevelTool.toolName);
   }, [viewportId, toolGroupId]);
 
   // Kích hoạt công cụ
   const activateTool = (toolName: string) => {
     try {
-      const toolGroup =
-        cornerstoneTools.ToolGroupManager.getToolGroup(toolGroupId);
+      const toolGroup = ToolGroupManager.getToolGroup(toolGroupId);
       if (!toolGroup) {
         console.error(`Không tìm thấy toolGroup với ID: ${toolGroupId}`);
         return;
@@ -59,7 +71,7 @@ const Toolbar: React.FC<ToolbarProps> = ({ viewportId, children }) => {
         }
 
         // Cấu hình đặc biệt cho AnnotationTool
-        if (toolName === cornerstoneTools.ArrowAnnotateTool.toolName) {
+        if (toolName === ArrowAnnotateTool.toolName) {
           toolGroup.setToolConfiguration(toolName, {
             getTextCallback: (callback: any, eventDetail: any) => {
               const text = prompt("Nhập nội dung chú thích:");
@@ -98,12 +110,12 @@ const Toolbar: React.FC<ToolbarProps> = ({ viewportId, children }) => {
 
   // Xử lý reset viewport
   const handleReset = () => {
-    const renderingEngine = cornerstone.getRenderingEngine(renderingEngineId);
+    const renderingEngine = getRenderingEngine(renderingEngineId);
     if (!renderingEngine) return;
 
     const stackViewport = renderingEngine.getViewport(
       `viewport-${viewportId}`
-    ) as cornerstone.StackViewport;
+    ) as StackViewport;
     if (!stackViewport) return;
 
     stackViewport.resetCamera();
@@ -130,17 +142,17 @@ const Toolbar: React.FC<ToolbarProps> = ({ viewportId, children }) => {
   // Công cụ chính
   const mainTools = [
     {
-      name: cornerstoneTools.WindowLevelTool.toolName,
+      name: WindowLevelTool.toolName,
       icon: "fas fa-adjust",
       title: "Điều chỉnh cửa sổ",
     },
     {
-      name: cornerstoneTools.PanTool.toolName,
+      name: PanTool.toolName,
       icon: "fas fa-hand-paper",
       title: "Di chuyển",
     },
     {
-      name: cornerstoneTools.ZoomTool.toolName,
+      name: ZoomTool.toolName,
       icon: "fas fa-search-plus",
       title: "Phóng to/thu nhỏ",
     },
@@ -149,49 +161,49 @@ const Toolbar: React.FC<ToolbarProps> = ({ viewportId, children }) => {
   // Công cụ đo lường
   const measurementTools = [
     {
-      name: cornerstoneTools.LengthTool.toolName,
+      name: LengthTool.toolName,
       icon: "fas fa-ruler",
       title: "Đo khoảng cách",
       label: "Đo khoảng cách",
     },
     {
-      name: cornerstoneTools.BidirectionalTool.toolName,
+      name: BidirectionalTool.toolName,
       icon: "fas fa-arrows-alt-h",
       title: "Đo hai chiều",
       label: "Đo hai chiều",
     },
     {
-      name: cornerstoneTools.ArrowAnnotateTool.toolName,
+      name: ArrowAnnotateTool.toolName,
       icon: "fas fa-comment-medical",
       title: "Chú thích",
       label: "Chú thích",
     },
     {
-      name: cornerstoneTools.EllipticalROITool.toolName,
+      name: EllipticalROITool.toolName,
       icon: "far fa-circle",
       title: "Vùng ellipse",
       label: "Vùng ellipse",
     },
     {
-      name: cornerstoneTools.RectangleROITool.toolName,
+      name: RectangleROITool.toolName,
       icon: "far fa-square",
       title: "Vùng chữ nhật",
       label: "Vùng chữ nhật",
     },
     {
-      name: cornerstoneTools.CircleROITool.toolName,
+      name: CircleROITool.toolName,
       icon: "far fa-circle",
       title: "Vùng tròn",
       label: "Vùng tròn",
     },
     {
-      name: cornerstoneTools.PlanarFreehandROITool.toolName,
+      name: PlanarFreehandROITool.toolName,
       icon: "fas fa-draw-polygon",
       title: "Vùng tự do",
       label: "Vùng tự do",
     },
     {
-      name: cornerstoneTools.SplineROITool.toolName,
+      name: SplineROITool.toolName,
       icon: "fas fa-bezier-curve",
       title: "Đường cong spline",
       label: "Đường cong spline",
@@ -218,7 +230,6 @@ const Toolbar: React.FC<ToolbarProps> = ({ viewportId, children }) => {
         ))}
       </div>
 
-      {/* Nhóm công cụ đo lường - Giữ nguyên cấu trúc nhưng thêm ref để xử lý dropdown */}
       <div className="tool-group" ref={dropdownRef}>
         <button
           className={`tool-button tool-dropdown-button ${
@@ -294,9 +305,7 @@ const Toolbar: React.FC<ToolbarProps> = ({ viewportId, children }) => {
       </div>
 
       {/* Thêm LayoutSelector vào toolbar */}
-      <div className="tool-group">
-        {children} {/* Render children (LayoutSelector) ở đây */}
-      </div>
+      <div className="tool-group">{children}</div>
 
       <Tooltip id="toolbar-tooltip" place="bottom" className="tool-tooltip" />
     </div>

@@ -1,14 +1,33 @@
-import * as cornerstone from "@cornerstonejs/core";
-import * as cornerstoneTools from "@cornerstonejs/tools";
-import * as dicomImageLoader from "@cornerstonejs/dicom-image-loader";
+import { init as initCornerstone3D } from "@cornerstonejs/core";
+import {
+  init as initCornerstoneTools,
+  ToolGroupManager,
+  addTool,
+  PanTool,
+  ZoomTool,
+  LengthTool,
+  ProbeTool,
+  AngleTool,
+  WindowLevelTool,
+  StackScrollTool,
+  BidirectionalTool,
+  ArrowAnnotateTool,
+  RectangleROITool,
+  EllipticalROITool,
+  CircleROITool,
+  PlanarFreehandROITool,
+  SplineROITool,
+  AnnotationTool,
+} from "@cornerstonejs/tools";
+import { init as initDicomImagaLoader } from "@cornerstonejs/dicom-image-loader";
 
 export const initCornerstone = async () => {
   try {
     // Khởi tạo Cornerstone3D
-    await cornerstone.init();
+    await initCornerstone3D();
 
     // Khởi tạo công cụ
-    await cornerstoneTools.init();
+    await initCornerstoneTools();
 
     // Cấu hình cho AnnotationTool
     const annotationConfiguration = {
@@ -21,65 +40,64 @@ export const initCornerstone = async () => {
     };
 
     // Đăng ký các công cụ cần thiết
-    cornerstoneTools.addTool(cornerstoneTools.PanTool);
-    cornerstoneTools.addTool(cornerstoneTools.ZoomTool);
-    cornerstoneTools.addTool(cornerstoneTools.LengthTool);
-    cornerstoneTools.addTool(cornerstoneTools.ProbeTool);
-    cornerstoneTools.addTool(cornerstoneTools.AngleTool);
-    cornerstoneTools.addTool(cornerstoneTools.WindowLevelTool);
-    cornerstoneTools.addTool(cornerstoneTools.StackScrollTool);
+    addTool(PanTool);
+    addTool(ZoomTool);
+    addTool(LengthTool);
+    addTool(ProbeTool);
+    addTool(AngleTool);
+    addTool(WindowLevelTool);
+    addTool(StackScrollTool);
 
-    cornerstoneTools.addTool(cornerstoneTools.BidirectionalTool);
-    cornerstoneTools.addTool(cornerstoneTools.ArrowAnnotateTool);
-    cornerstoneTools.addTool(cornerstoneTools.RectangleROITool);
-    cornerstoneTools.addTool(cornerstoneTools.EllipticalROITool);
-    cornerstoneTools.addTool(cornerstoneTools.CircleROITool);
-    cornerstoneTools.addTool(cornerstoneTools.PlanarFreehandROITool);
-    cornerstoneTools.addTool(cornerstoneTools.SplineROITool);
+    addTool(BidirectionalTool);
+    addTool(ArrowAnnotateTool);
+    addTool(RectangleROITool);
+    addTool(EllipticalROITool);
+    addTool(CircleROITool);
+    addTool(PlanarFreehandROITool);
+    addTool(SplineROITool);
 
     // Khởi tạo DICOM Image Loader
-    dicomImageLoader.init();
+    initDicomImagaLoader();
 
     // Tạo tool group mặc định
     const toolGroupId = "default";
-    const toolGroup =
-      cornerstoneTools.ToolGroupManager.createToolGroup(toolGroupId);
+    const toolGroup = ToolGroupManager.createToolGroup(toolGroupId);
 
     if (toolGroup) {
       // Thêm các công cụ vào toolGroup
-      toolGroup.addTool(cornerstoneTools.PanTool.toolName);
-      toolGroup.addTool(cornerstoneTools.ZoomTool.toolName);
-      toolGroup.addTool(cornerstoneTools.WindowLevelTool.toolName);
-      toolGroup.addTool(cornerstoneTools.LengthTool.toolName);
-      toolGroup.addTool(cornerstoneTools.AngleTool.toolName);
-      toolGroup.addTool(cornerstoneTools.ProbeTool.toolName);
-      toolGroup.addTool(cornerstoneTools.StackScrollTool.toolName);
-      toolGroup.addTool(cornerstoneTools.BidirectionalTool.toolName);
-      toolGroup.addTool(cornerstoneTools.RectangleROITool.toolName);
-      toolGroup.addTool(cornerstoneTools.ArrowAnnotateTool.toolName);
-      toolGroup.addTool(cornerstoneTools.EllipticalROITool.toolName);
-      toolGroup.addTool(cornerstoneTools.CircleROITool.toolName);
-      toolGroup.addTool(cornerstoneTools.PlanarFreehandROITool.toolName);
-      toolGroup.addTool(cornerstoneTools.SplineROITool.toolName);
+      toolGroup.addTool(PanTool.toolName);
+      toolGroup.addTool(ZoomTool.toolName);
+      toolGroup.addTool(WindowLevelTool.toolName);
+      toolGroup.addTool(LengthTool.toolName);
+      toolGroup.addTool(AngleTool.toolName);
+      toolGroup.addTool(ProbeTool.toolName);
+      toolGroup.addTool(StackScrollTool.toolName);
+      toolGroup.addTool(BidirectionalTool.toolName);
+      toolGroup.addTool(RectangleROITool.toolName);
+      toolGroup.addTool(ArrowAnnotateTool.toolName);
+      toolGroup.addTool(EllipticalROITool.toolName);
+      toolGroup.addTool(CircleROITool.toolName);
+      toolGroup.addTool(PlanarFreehandROITool.toolName);
+      toolGroup.addTool(SplineROITool.toolName);
 
       // Cấu hình đặc biệt cho AnnotationTool
       toolGroup.setToolConfiguration(
-        cornerstoneTools.AnnotationTool.toolName,
+        AnnotationTool.toolName,
         annotationConfiguration
       );
 
       // Thiết lập công cụ mặc định
-      toolGroup.setToolActive(cornerstoneTools.WindowLevelTool.toolName, {
+      toolGroup.setToolActive(WindowLevelTool.toolName, {
         bindings: [{ mouseButton: 1 }],
       });
 
       // Thiết lập StackScrollTool với binding chuột giữa
-      toolGroup.setToolActive(cornerstoneTools.StackScrollTool.toolName, {
+      toolGroup.setToolActive(StackScrollTool.toolName, {
         bindings: [{ mouseButton: 2 }], // Chuột giữa
       });
 
       // Sử dụng mouseButton: 4 để đại diện cho wheel event
-      toolGroup.setToolActive(cornerstoneTools.StackScrollTool.toolName, {
+      toolGroup.setToolActive(StackScrollTool.toolName, {
         bindings: [{ mouseButton: 4 }],
       });
     }

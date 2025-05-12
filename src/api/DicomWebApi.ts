@@ -5,7 +5,7 @@ import {
   formatDicomDate,
 } from "../utils/dicomUtils";
 
-const API_URL = "http://localhost:5086/dicom-web";
+const API_URL = process.env.REACT_APP_API_URL;
 
 // Thêm các phương thức mới vào DicomWebApi
 export const DicomWebApi = {

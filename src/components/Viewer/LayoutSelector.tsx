@@ -6,7 +6,7 @@ import React, {
   useMemo,
 } from "react";
 import { useLayoutStore } from "../../store/useLayoutStore";
-import "./LayoutSelector.css";
+import classes from "./LayoutSelector.module.css";
 
 interface LayoutSelectorProps {
   onLayoutChange?: (layoutId: string) => void;
@@ -148,7 +148,7 @@ const LayoutSelector: React.FC<LayoutSelectorProps> = ({ onLayoutChange }) => {
             viewportHeight - rect.bottom
           );
 
-          dropdown.style.maxHeight = `${availableHeight - 20}px`; // Trừ 20px margin
+          dropdown.style.maxHeight = `${availableHeight - 20}px`;
 
           if (topSpace > viewportHeight - rect.bottom) {
             dropdown.style.bottom = "0";
@@ -233,7 +233,9 @@ const LayoutSelector: React.FC<LayoutSelectorProps> = ({ onLayoutChange }) => {
         grid.push(
           <div
             key={`${row}-${col}`}
-            className={`custom-grid-cell ${isHighlighted ? "highlighted" : ""}`}
+            className={`${classes["custom-grid-cell"]} ${
+              isHighlighted ? classes["highlighted"] : ""
+            }`}
             onMouseEnter={() => handleCellHover(row, col)}
             onClick={() => handleCustomLayoutSelect(row, col)}
           />
@@ -247,7 +249,7 @@ const LayoutSelector: React.FC<LayoutSelectorProps> = ({ onLayoutChange }) => {
   // Xử lý click vào nút - tối ưu với useCallback
   const handleButtonClick = useCallback(
     (e: React.MouseEvent) => {
-      e.stopPropagation(); // Ngăn chặn sự kiện lan truyền
+      e.stopPropagation();
       setIsOpen(!isOpen);
     },
     [isOpen]
@@ -255,7 +257,7 @@ const LayoutSelector: React.FC<LayoutSelectorProps> = ({ onLayoutChange }) => {
 
   // Xử lý click vào dropdown - tối ưu với useCallback
   const handleDropdownClick = useCallback((e: React.MouseEvent) => {
-    e.stopPropagation(); // Ngăn chặn sự kiện lan truyền
+    e.stopPropagation();
   }, []);
 
   // Xử lý chuyển tab - tối ưu với useCallback
@@ -264,7 +266,7 @@ const LayoutSelector: React.FC<LayoutSelectorProps> = ({ onLayoutChange }) => {
   }, []);
 
   return (
-    <div className="layout-selector">
+    <div className={classes["layout-selector"]}>
       <button
         ref={buttonRef}
         className="tool-button layout-button"
@@ -278,38 +280,48 @@ const LayoutSelector: React.FC<LayoutSelectorProps> = ({ onLayoutChange }) => {
       {isOpen && (
         <div
           ref={dropdownRef}
-          className={`layout-dropdown layout-dropdown-${dropdownPosition}`}
+          className={`${classes["layout-dropdown"]} ${
+            classes[`layout-dropdown-${dropdownPosition}`]
+          }`}
           onClick={handleDropdownClick}
         >
-          <div className="layout-tabs">
+          <div className={classes["layout-tabs"]}>
             <button
-              className={`layout-tab ${activeTab === "common" ? "active" : ""}`}
+              className={`${classes["layout-tab"]} ${
+                activeTab === "common" ? classes["active"] : ""
+              }`}
               onClick={() => handleTabChange("common")}
             >
               Phổ biến
             </button>
             <button
-              className={`layout-tab ${activeTab === "custom" ? "active" : ""}`}
+              className={`${classes["layout-tab"]} ${
+                activeTab === "custom" ? classes["active"] : ""
+              }`}
               onClick={() => handleTabChange("custom")}
             >
               Tuỳ chỉnh
             </button>
           </div>
 
-          <div className="layout-options">
+          <div className={classes["layout-options"]}>
             {activeTab === "common" &&
               commonLayouts.map((layout) => (
                 <button
                   key={layout.id}
-                  className={`layout-option ${
-                    currentLayout === layout.id ? "active" : ""
+                  className={`${classes["layout-option"]} ${
+                    currentLayout === layout.id ? classes["active"] : ""
                   }`}
                   onClick={() => handleLayoutSelect(layout.id)}
                   title={layout.title}
                 >
-                  <div className={`layout-icon ${layout.icon}`}></div>
+                  <div
+                    className={`${classes["layout-icon"]} ${
+                      classes[layout.icon]
+                    }`}
+                  ></div>
                   {currentLayout === layout.id && (
-                    <div className="layout-selected-indicator">
+                    <div className={classes["layout-selected-indicator"]}>
                       <i className="fas fa-check"></i>
                     </div>
                   )}
@@ -317,17 +329,19 @@ const LayoutSelector: React.FC<LayoutSelectorProps> = ({ onLayoutChange }) => {
               ))}
 
             {activeTab === "custom" && (
-              <div className="custom-layout-container">
-                <div className="custom-grid-container">{customGridCells}</div>
-                <div className="custom-grid-info">
+              <div className={classes["custom-layout-container"]}>
+                <div className={classes["custom-grid-container"]}>
+                  {customGridCells}
+                </div>
+                <div className={classes["custom-grid-info"]}>
                   <p>Di chuột để chọn số hàng và cột</p>
                   <strong>Nhấp để áp dụng</strong>
                   {hoveredCell && (
-                    <p className="custom-grid-size">
+                    <p className={classes["custom-grid-size"]}>
                       {hoveredCell.row}x{hoveredCell.col}
                       {currentLayout ===
                         `custom-${hoveredCell.row}x${hoveredCell.col}` && (
-                        <span className="custom-selected-indicator">
+                        <span className={classes["custom-selected-indicator"]}>
                           <i className="fas fa-check"></i>
                         </span>
                       )}

@@ -1,4 +1,4 @@
-import * as dicomParser from "dicom-parser";
+import { parseDA, parseTM } from "dicom-parser";
 
 export interface DicomStudy {
   StudyInstanceUID: string;
@@ -30,14 +30,14 @@ export const parseDicomTag = (dataset: any, tag: string): string => {
         return value;
 
       case "DA": // Date
-        const parsedDate = dicomParser.parseDA(value);
+        const parsedDate = parseDA(value);
         return `${parsedDate.year}${String(parsedDate.month).padStart(
           2,
           "0"
         )}${String(parsedDate.day).padStart(2, "0")}`;
 
       case "TM": // Time
-        const time = dicomParser.parseTM(value);
+        const time = parseTM(value);
         return `${String(time.hours).padStart(2, "0")}${
           time.minutes ? String(time.minutes).padStart(2, "0") : "00"
         }${time.seconds ? String(time.seconds).padStart(2, "0") : "00"}`;
@@ -78,7 +78,10 @@ export const parseDicomStudy = (study: any): DicomStudy => {
   const studyDate = parseDicomTag(study, "00080020");
   const modalities = study["00080061"]?.Value?.join("/") || "";
   const numberOfSeries = parseInt(parseDicomTag(study, "00201206") || "0", 10);
-  const numberOfInstances = parseInt(parseDicomTag(study, "00201208") || "0", 10);
+  const numberOfInstances = parseInt(
+    parseDicomTag(study, "00201208") || "0",
+    10
+  );
 
   return {
     StudyInstanceUID: parseDicomTag(study, "0020000D"),
@@ -89,6 +92,6 @@ export const parseDicomStudy = (study: any): DicomStudy => {
     AccessionNumber: parseDicomTag(study, "00080050"),
     Modalities: modalities,
     NumberOfSeries: numberOfSeries,
-    NumberOfInstances: numberOfInstances
+    NumberOfInstances: numberOfInstances,
   };
 };

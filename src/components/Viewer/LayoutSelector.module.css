@@ -1,76 +1,87 @@
+/* Container chính */
 .layout-selector {
   position: relative;
 }
 
+/* Nút layout */
 .layout-button {
   display: flex;
   align-items: center;
   justify-content: center;
+  width: var(--button-size);
+  height: var(--button-size);
+  cursor: pointer;
   position: relative;
-  z-index: 10; /* Tăng z-index để đảm bảo nút không bị che phủ */
-  min-width: 30px; /* Đảm bảo kích thước tối thiểu */
-  min-height: 30px;
-  cursor: pointer !important; /* Đảm bảo con trỏ luôn là pointer */
+  z-index: 100;
+  background: var(--dark-bg-primary);
+  color: var(--dark-text-primary);
+  border: 1px solid var(--dark-border-color);
+  border-radius: var(--border-radius);
+  transition: background var(--transition-speed) var(--transition-function),
+    border-color var(--transition-speed);
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
 }
 
-/* Tạo vùng click lớn hơn cho nút */
+.layout-button:hover {
+  background: var(--dark-bg-elevated);
+  border-color: var(--primary-color);
+}
+
 .layout-button::after {
   content: "";
   position: absolute;
-  top: -5px;
-  left: -5px;
-  right: -5px;
-  bottom: -5px;
+  inset: -5px;
   z-index: -1;
 }
 
+/* Dropdown */
 .layout-dropdown {
   position: absolute;
-  background-color: #0a1929;
-  border-radius: 4px;
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+  background: var(--dark-bg-tertiary);
+  border: 1px solid var(--dark-border-light);
+  border-radius: var(--border-radius);
+  box-shadow: var(--shadow);
   width: 280px;
-  z-index: 1001; /* Tăng z-index cao hơn nút */
+  z-index: 1001;
   overflow: hidden;
-  transition: all 0.3s ease;
-  pointer-events: auto !important; /* Đảm bảo dropdown luôn nhận sự kiện */
-  -webkit-transform: translateZ(0); /* Cải thiện hiệu suất render trên mobile */
+  transition: opacity var(--transition-speed) var(--transition-function),
+    transform var(--transition-speed) var(--transition-function);
+  pointer-events: auto;
   transform: translateZ(0);
+  isolation: isolate;
 }
 
-/* Dropdown hiển thị bên dưới */
+/* Vị trí dropdown */
 .layout-dropdown-bottom {
-  top: 100%;
+  top: calc(100% + 5px);
   right: 0;
-  margin-top: 5px;
-  animation: fadeIn 0.2s ease-out;
+  animation: fadeIn var(--transition-speed) var(--transition-function);
 }
 
-/* Dropdown hiển thị bên phải */
 .layout-dropdown-right {
   top: 0;
-  left: 100%;
-  margin-left: 5px;
+  left: calc(100% + 5px);
+  animation: fadeInRight var(--transition-speed) var(--transition-function);
 }
 
-/* Dropdown hiển thị bên trái */
 .layout-dropdown-left {
   top: 0;
-  right: 100%;
-  margin-right: 5px;
+  right: calc(100% + 5px);
+  animation: fadeInLeft var(--transition-speed) var(--transition-function);
 }
 
-/* Dropdown hiển thị bên trên */
 .layout-dropdown-top {
-  bottom: 100%;
+  bottom: calc(100% + 5px);
   right: 0;
-  margin-bottom: 5px;
-  animation: fadeInBottom 0.2s ease-out;
+  animation: fadeInBottom var(--transition-speed) var(--transition-function);
 }
 
+/* Tabs */
 .layout-tabs {
   display: flex;
-  border-bottom: 1px solid #1e3a5f;
+  border-bottom: 1px solid var(--dark-border-color);
+  background: var(--dark-bg-secondary);
 }
 
 .layout-tab {
@@ -78,49 +89,66 @@
   padding: 10px;
   background: none;
   border: none;
-  color: #fff;
+  color: var(--dark-text-muted);
   cursor: pointer;
   font-size: 14px;
-  transition: background-color 0.2s;
-  z-index: 1; /* Đảm bảo tab có thể click được */
+  text-align: center;
+  transition: background var(--transition-speed), color var(--transition-speed),
+    transform var(--transition-speed);
+}
+
+.layout-tab:hover {
+  background: var(--dark-bg-elevated);
+  color: var(--dark-text-primary);
 }
 
 .layout-tab.active {
-  background-color: #1e3a5f;
-  border-bottom: 2px solid #3498db;
+  background: var(--dark-bg-elevated);
+  border-bottom: 2px solid var(--primary-color);
+  color: var(--dark-text-primary);
 }
 
+.layout-tab:active {
+  transform: scale(0.98);
+}
+
+/* Options */
 .layout-options {
   padding: 10px;
   display: flex;
   flex-wrap: wrap;
   gap: 10px;
   justify-content: center;
+  background: var(--dark-bg-tertiary);
 }
 
 .layout-option {
   width: 70px;
   height: 70px;
-  background: none;
-  border: 1px solid #1e3a5f;
-  border-radius: 4px;
+  background: var(--dark-bg-secondary);
+  border: 1px solid var(--dark-border-color);
+  border-radius: var(--border-radius);
   cursor: pointer;
   position: relative;
-  padding: 0;
-  overflow: hidden;
-  transition: all 0.2s ease;
-  z-index: 1; /* Đảm bảo option có thể click được */
+  transition: border-color var(--transition-speed),
+    background var(--_transition-speed), box-shadow var(--transition-speed),
+    transform var(--transition-speed);
 }
 
 .layout-option:hover {
-  border-color: #3498db;
-  background-color: rgba(52, 152, 219, 0.1);
+  border-color: var(--primary-color);
+  background: var(--primary-bg-lighter);
+  box-shadow: var(--shadow-sm);
 }
 
 .layout-option.active {
-  border: 2px solid #3498db;
-  background-color: rgba(52, 152, 219, 0.2);
-  box-shadow: 0 0 8px rgba(52, 152, 219, 0.5);
+  border: 2px solid var(--primary-color);
+  background: var(--primary-bg-light);
+  box-shadow: var(--shadow);
+}
+
+.layout-option:active {
+  transform: scale(0.95);
 }
 
 .layout-icon {
@@ -132,24 +160,34 @@
   background-size: 80%;
   background-position: center;
   background-repeat: no-repeat;
-  pointer-events: none; /* Đảm bảo sự kiện click đi qua icon đến option */
+  pointer-events: none;
+  transition: transform var(--transition-speed);
 }
 
-/* Biểu tượng cho layout đang được chọn */
-.layout-selected-indicator {
+.layout-option:hover .layout-icon {
+  transform: scale(1.05);
+}
+
+.layout-option.active .layout-icon {
+  opacity: 0.9;
+}
+
+/* Indicator */
+.layout-selected-indicator,
+.custom-selected-indicator {
   position: absolute;
   top: 5px;
   right: 5px;
   width: 18px;
   height: 18px;
-  background-color: #3498db;
+  background: var(--primary-color);
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
-  color: white;
+  color: var(--dark-text-primary);
   font-size: 10px;
-  pointer-events: none; /* Đảm bảo sự kiện click đi qua indicator đến option */
+  pointer-events: none;
 }
 
 /* Các biểu tượng layout */
@@ -179,43 +217,50 @@
 
 /* Custom layout grid */
 .custom-layout-container {
-  width: 100%;
   display: flex;
   align-items: center;
   gap: 10px;
+  width: 100%;
+  padding: 10px;
+  background: var(--dark-bg-tertiary);
 }
 
 .custom-grid-container {
   display: grid;
-  grid-template-columns: repeat(4, 25px);
-  grid-template-rows: repeat(4, 25px);
+  grid-template: repeat(4, 25px) / repeat(4, 25px);
   gap: 3px;
 }
 
 .custom-grid-cell {
   width: 25px;
   height: 25px;
-  background-color: #1e3a5f;
-  border: 1px solid #2c5282;
+  background: var(--dark-bg-elevated);
+  border: 1px solid var(--dark-border-light);
   cursor: pointer;
-  z-index: 1; /* Đảm bảo cell có thể click được */
+  transition: background var(--transition-speed),
+    border-color var(--transition-speed), box-shadow var(--transition-speed);
+}
+
+.custom-grid-cell:hover {
+  border-color: var(--primary-color);
+  box-shadow: var(--shadow-sm);
 }
 
 .custom-grid-cell.highlighted {
-  background-color: #3498db;
+  background: var(--primary-color);
+  border-color: var(--primary-hover);
 }
 
 .custom-grid-info {
   text-align: center;
   font-size: 12px;
-  color: #ccc;
-  width: 100%;
+  color: var(--dark-text-muted);
 }
 
 .custom-grid-size {
   font-size: 16px;
   font-weight: bold;
-  color: #fff;
+  color: var(--dark-text-primary);
   margin-top: 5px;
   display: flex;
   align-items: center;
@@ -223,42 +268,7 @@
 }
 
 .custom-selected-indicator {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 18px;
-  height: 18px;
-  background-color: #3498db;
-  border-radius: 50%;
   margin-left: 5px;
-  color: white;
-  font-size: 10px;
-  pointer-events: none; /* Đảm bảo sự kiện click đi qua indicator */
-}
-
-/* Hiệu ứng khi hover vào layout */
-.layout-option:hover .layout-icon {
-  transform: scale(1.05);
-}
-
-/* Hiệu ứng khi layout được chọn */
-.layout-option.active .layout-icon {
-  opacity: 0.9;
-}
-
-/* Hiệu ứng khi hover vào custom grid cell */
-.custom-grid-cell:hover {
-  border-color: #3498db;
-  box-shadow: 0 0 4px rgba(52, 152, 219, 0.5);
-}
-
-/* Sửa lỗi click không được trên thiết bị di động */
-.layout-button,
-.layout-tab,
-.layout-option,
-.custom-grid-cell {
-  touch-action: manipulation; /* Cải thiện khả năng click trên thiết bị cảm ứng */
-  -webkit-tap-highlight-color: transparent; /* Loại bỏ highlight khi tap trên iOS */
 }
 
 /* Responsive */
@@ -268,6 +278,22 @@
     max-width: 80vw;
     max-height: 80vh;
     overflow-y: auto;
+    scrollbar-width: thin;
+    scrollbar-color: var(--dark-border-light) var(--dark-bg-tertiary);
+  }
+
+  .layout-dropdown::-webkit-scrollbar {
+    width: var(--scrollbar-size);
+  }
+
+  .layout-dropdown::-webkit-scrollbar-track {
+    background: var(--dark-bg-tertiary);
+    border-radius: var(--scrollbar-border-radius);
+  }
+
+  .layout-dropdown::-webkit-scrollbar-thumb {
+    background: var(--dark-border-light);
+    border-radius: var(--scrollbar-border-radius);
   }
 
   .layout-option {
@@ -278,24 +304,21 @@
   .layout-dropdown-right,
   .layout-dropdown-left {
     position: fixed;
+    top: calc(var(--header-height) + 65px);
   }
 
   .layout-dropdown-right {
-    left: auto; /* Reset left */
-    right: 10px; /* Đặt cách lề phải 10px */
-    top: 50px; /* Đặt cách lề trên 50px */
+    right: 10px;
+    left: auto;
   }
 
-  /* Điều chỉnh vị trí cho dropdown bên trái */
   .layout-dropdown-left {
-    left: 10px; /* Đặt cách lề trái 10px */
-    right: auto; /* Reset right */
-    top: 50px; /* Đặt cách lề trên 50px */
+    left: 10px;
+    right: auto;
   }
 
   .custom-grid-container {
-    grid-template-columns: repeat(4, 20px);
-    grid-template-rows: repeat(4, 20px);
+    grid-template: repeat(4, 20px) / repeat(4, 20px);
     gap: 2px;
   }
 
@@ -314,13 +337,12 @@
     gap: 5px;
   }
 
-  .custom-grid-info p,
-  .custom-grid-info strong {
-    margin: 2px 0;
+  .custom-grid-info {
     font-size: 11px;
   }
 
-  .layout-selected-indicator {
+  .layout-selected-indicator,
+  .custom-selected-indicator {
     width: 16px;
     height: 16px;
     top: 3px;
@@ -328,7 +350,6 @@
     font-size: 8px;
   }
 
-  /* Xử lý cho chế độ ngang trên mobile */
   @media (orientation: landscape) {
     .layout-dropdown {
       max-height: 85vh;
@@ -341,7 +362,6 @@
   }
 }
 
-/* Màn hình rất nhỏ */
 @media (max-width: 480px) {
   .layout-dropdown {
     width: 200px;
@@ -353,19 +373,8 @@
     height: 50px;
   }
 
-  .layout-options {
-    padding: 5px;
-    gap: 4px;
-  }
-
-  .layout-tab {
-    padding: 6px 3px;
-    font-size: 11px;
-  }
-
   .custom-grid-container {
-    grid-template-columns: repeat(4, 18px);
-    grid-template-rows: repeat(4, 18px);
+    grid-template: repeat(4, 18px) / repeat(4, 18px);
     gap: 1px;
   }
 
@@ -383,7 +392,6 @@
   }
 }
 
-/* Xử lý cho thiết bị có màn hình nhỏ và độ phân giải thấp */
 @media (max-width: 360px) {
   .layout-dropdown {
     width: 180px;
@@ -394,13 +402,8 @@
     height: 45px;
   }
 
-  .layout-options {
-    gap: 3px;
-  }
-
   .custom-grid-container {
-    grid-template-columns: repeat(4, 16px);
-    grid-template-rows: repeat(4, 16px);
+    grid-template: repeat(4, 16px) / repeat(4, 16px);
   }
 
   .custom-grid-cell {
@@ -409,7 +412,6 @@
   }
 }
 
-/* Màn hình siêu nhỏ */
 @media (max-width: 320px) {
   .layout-dropdown {
     width: 160px;
@@ -421,8 +423,7 @@
   }
 
   .custom-grid-container {
-    grid-template-columns: repeat(4, 14px);
-    grid-template-rows: repeat(4, 14px);
+    grid-template: repeat(4, 14px) / repeat(4, 14px);
   }
 
   .custom-grid-cell {
@@ -436,7 +437,7 @@
   }
 }
 
-/* Hiệu ứng animation khi mở dropdown */
+/* Animations */
 @keyframes fadeIn {
   from {
     opacity: 0;
@@ -448,11 +449,6 @@
   }
 }
 
-.layout-dropdown-bottom {
-  animation: fadeIn 0.2s ease-out;
-}
-
-/* Hiệu ứng animation cho dropdown bên phải */
 @keyframes fadeInRight {
   from {
     opacity: 0;
@@ -464,7 +460,6 @@
   }
 }
 
-/* Hiệu ứng animation cho dropdown bên trái */
 @keyframes fadeInLeft {
   from {
     opacity: 0;
@@ -476,7 +471,6 @@
   }
 }
 
-/* Hiệu ứng animation cho dropdown bên trên */
 @keyframes fadeInBottom {
   from {
     opacity: 0;
@@ -488,139 +482,51 @@
   }
 }
 
-.layout-dropdown-right {
-  top: 0;
-  left: 100%;
-  margin-left: 5px;
-  animation: fadeInRight 0.2s ease-out;
-}
-
-.layout-dropdown-left {
-  top: 0;
-  right: 100%;
-  margin-right: 5px;
-  animation: fadeInLeft 0.2s ease-out;
-}
-
-.layout-dropdown-top {
-  animation: fadeInBottom 0.2s ease-out;
-}
-
-/* Hiệu ứng khi chọn tab */
-.layout-tab:active {
-  transform: scale(0.98);
-}
-
-/* Hiệu ứng khi chọn layout */
-.layout-option:active {
-  transform: scale(0.95);
-}
-
-/* Xử lý cho màn hình có chiều cao thấp */
-@media (max-height: 600px) {
-  .layout-dropdown {
-    max-height: 80vh;
-    overflow-y: auto;
-  }
-
-  .layout-options {
-    max-height: 60vh;
-    overflow-y: auto;
-  }
-}
-
-/* Xử lý cho thiết bị có màn hình cảm ứng */
+/* Touch devices */
 @media (hover: none) {
-  .layout-option:hover {
-    border-color: #1e3a5f;
-    background-color: transparent;
+  .layout-option:hover,
+  .custom-grid-cell:hover {
+    border-color: inherit;
+    background: transparent;
+    box-shadow: none;
   }
 
   .layout-option:hover .layout-icon {
     transform: none;
   }
 
-  .custom-grid-cell:hover {
-    border-color: #2c5282;
-    box-shadow: none;
-  }
-
   .layout-option:active {
-    border-color: #3498db;
-    background-color: rgba(52, 152, 219, 0.1);
+    border-color: var(--primary-color);
+    background: var(--primary-bg-lighter);
   }
 
-  /* Tăng kích thước vùng có thể click */
-  .layout-tab,
-  .layout-option,
-  .custom-grid-cell {
-    position: relative;
-  }
-
-  .layout-tab::after,
-  .layout-option::after,
-  .custom-grid-cell::after {
-    content: "";
-    position: absolute;
-    top: -5px;
-    left: -5px;
-    right: -5px;
-    bottom: -5px;
-    z-index: -1;
+  .layout-button:hover,
+  .layout-tab:hover,
+  .custom-grid-cell:hover {
+    background: inherit;
+    border-color: inherit;
   }
 }
 
-/* Sửa lỗi click không được trên Safari */
+/* Safari fix */
 @supports (-webkit-touch-callout: none) {
   .layout-tab,
   .layout-option,
   .custom-grid-cell {
-    cursor: pointer;
     -webkit-user-select: none;
     user-select: none;
   }
 }
 
-/* Sửa lỗi không click được trên một số trình duyệt */
-.layout-selector * {
-  pointer-events: auto;
-}
-
-/* Đảm bảo nút luôn có thể click được */
-.tool-button.layout-button {
-  pointer-events: auto !important;
-  position: relative;
-  z-index: 100;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-/* Tăng vùng click cho nút trên thiết bị cảm ứng */
+/* Touch device hit area */
 @media (pointer: coarse) {
-  .layout-button::before {
+  .layout-button::before,
+  .layout-tab::after,
+  .layout-option::after,
+  .custom-grid-cell::after {
     content: "";
     position: absolute;
-    top: -10px;
-    left: -10px;
-    right: -10px;
-    bottom: -10px;
+    inset: -5px;
     z-index: -1;
   }
-}
-
-/* Đảm bảo dropdown không bị che phủ bởi các phần tử khác */
-.layout-dropdown {
-  position: absolute;
-  background-color: #0a1929;
-  border-radius: 4px;
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
-  width: 280px;
-  z-index: 1001;
-  overflow: hidden;
-  transition: all 0.3s ease;
-  pointer-events: auto !important; /* Đảm bảo dropdown luôn nhận sự kiện */
-  -webkit-transform: translateZ(0); /* Cải thiện hiệu suất render trên mobile */
-  transform: translateZ(0);
-  isolation: isolate;
 }
