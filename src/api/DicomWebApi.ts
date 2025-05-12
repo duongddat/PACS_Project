@@ -302,5 +302,5 @@ export const DicomWebApi = {
       10
     );
     return numberOfFrames > 1;
-  }
+  },
 };

@@ -188,7 +188,6 @@ const Viewport: React.FC<ViewportProps> = React.memo(({ id }) => {
       try {
         // Kiểm tra xem element có tồn tại không trước khi thực hiện bất kỳ thao tác nào
         if (!viewportRef.current || !viewportRef.current.isConnected) {
-          console.warn("Element không tồn tại hoặc không được kết nối với DOM");
           return;
         }
 
@@ -196,9 +195,6 @@ const Viewport: React.FC<ViewportProps> = React.memo(({ id }) => {
 
         // Kiểm tra xem rendering engine có tồn tại không hoặc đã bị hủy
         if (!renderingEngine || renderingEngine.hasBeenDestroyed) {
-          console.log(
-            "Rendering engine không tồn tại hoặc đã bị hủy, tạo mới..."
-          );
           renderingEngine = new cornerstone.RenderingEngine(renderingEngineId);
         }
 
@@ -215,7 +211,6 @@ const Viewport: React.FC<ViewportProps> = React.memo(({ id }) => {
 
         // Kiểm tra lại element trước khi tạo viewport mới
         if (!viewportRef.current || !viewportRef.current.isConnected) {
-          console.warn("Element không còn tồn tại, hủy thao tác");
           return;
         }
 
@@ -290,10 +285,9 @@ const Viewport: React.FC<ViewportProps> = React.memo(({ id }) => {
             if (renderingEngine.hasBeenDestroyed) {
               // Kiểm tra lại element trước khi tạo mới
               if (!viewportRef.current || !viewportRef.current.isConnected) {
-                console.warn("Element không còn tồn tại, hủy thao tác");
                 return;
               }
-              
+
               renderingEngine = new cornerstone.RenderingEngine(
                 renderingEngineId
               );
@@ -314,10 +308,9 @@ const Viewport: React.FC<ViewportProps> = React.memo(({ id }) => {
             if (!stackViewport) {
               // Kiểm tra lại element trước khi tạo mới
               if (!viewportRef.current || !viewportRef.current.isConnected) {
-                console.warn("Element không còn tồn tại, hủy thao tác");
                 return;
               }
-              
+
               // Nếu viewport không còn tồn tại, tạo mới
               renderingEngine.enableElement({
                 viewportId,
@@ -339,13 +332,13 @@ const Viewport: React.FC<ViewportProps> = React.memo(({ id }) => {
               "Lỗi khi truy cập viewport sau khi tải hình ảnh:",
               viewportError
             );
-            
+
             // Kiểm tra lại element trước khi thử lại
             if (!viewportRef.current || !viewportRef.current.isConnected) {
               console.warn("Element không còn tồn tại, hủy thao tác");
               return;
             }
-            
+
             // Kiểm tra xem lỗi có phải do rendering engine đã bị hủy không
             if (
               viewportError.message &&
@@ -405,7 +398,6 @@ const Viewport: React.FC<ViewportProps> = React.memo(({ id }) => {
     const initTimer = setTimeout(() => {
       // Kiểm tra lại element trước khi khởi tạo
       if (!viewportRef.current || !viewportRef.current.isConnected) {
-        console.warn("Element không tồn tại hoặc không được kết nối với DOM");
         return;
       }
 
@@ -429,7 +421,6 @@ const Viewport: React.FC<ViewportProps> = React.memo(({ id }) => {
 
         // Kiểm tra lại element trước khi thử lại
         if (!viewportRef.current || !viewportRef.current.isConnected) {
-          console.warn("Element không còn tồn tại, hủy thao tác");
           return;
         }
 
@@ -445,7 +436,8 @@ const Viewport: React.FC<ViewportProps> = React.memo(({ id }) => {
       }
 
       // Kiểm tra xem tool group đã tồn tại chưa
-      let toolGroup = cornerstoneTools.ToolGroupManager.getToolGroup(toolGroupId);
+      let toolGroup =
+        cornerstoneTools.ToolGroupManager.getToolGroup(toolGroupId);
 
       if (!toolGroup) {
         toolGroup =
@@ -489,7 +481,7 @@ const Viewport: React.FC<ViewportProps> = React.memo(({ id }) => {
     return () => {
       // Xóa timer nếu component unmount trước khi timer kết thúc
       clearTimeout(initTimer);
-      
+
       // Xóa cache trước khi unmount
       clearCache();
 
@@ -537,7 +529,7 @@ const Viewport: React.FC<ViewportProps> = React.memo(({ id }) => {
         setIsLoading(false);
         return;
       }
-      
+
       cornerstone.cache.purgeCache();
       loadAndDisplayImage(imageId);
     }, 50);
