@@ -128,7 +128,7 @@ const Viewport: React.FC<ViewportProps> = React.memo(({ id }) => {
     }
   }, []);
 
-  // Hàm để điều chỉnh hình hình hình hình hình hình hình hình ảnh vừa với viewport
+  // Hàm để điều chỉnh hình hình hình hình hình hình hình hình hình hình hình ảnh vừa với viewport
   const fitImageToViewport = useCallback(
     (stackViewport: cornerstone.StackViewport) => {
       try {
@@ -167,7 +167,7 @@ const Viewport: React.FC<ViewportProps> = React.memo(({ id }) => {
         }
       } catch (err) {
         console.error(
-          "Lỗi khi điều chỉnh hình hình hình hình hình hình hình hình hình ảnh vừa với viewport:",
+          "Lỗi khi điều chỉnh hình hình hình hình hình hình hình hình hình hình hình hình ảnh vừa với viewport:",
           err
         );
       }
@@ -186,6 +186,12 @@ const Viewport: React.FC<ViewportProps> = React.memo(({ id }) => {
       setIsLoading(true);
 
       try {
+        // Kiểm tra xem element có tồn tại không trước khi thực hiện bất kỳ thao tác nào
+        if (!viewportRef.current || !viewportRef.current.isConnected) {
+          console.warn("Element không tồn tại hoặc không được kết nối với DOM");
+          return;
+        }
+
         let renderingEngine = cornerstone.getRenderingEngine(renderingEngineId);
 
         // Kiểm tra xem rendering engine có tồn tại không hoặc đã bị hủy
@@ -207,6 +213,12 @@ const Viewport: React.FC<ViewportProps> = React.memo(({ id }) => {
           stackViewport = null;
         }
 
+        // Kiểm tra lại element trước khi tạo viewport mới
+        if (!viewportRef.current || !viewportRef.current.isConnected) {
+          console.warn("Element không còn tồn tại, hủy thao tác");
+          return;
+        }
+
         if (!stackViewport) {
           try {
             renderingEngine.enableElement({
@@ -224,6 +236,12 @@ const Viewport: React.FC<ViewportProps> = React.memo(({ id }) => {
             }
           } catch (error: any) {
             console.error("Lỗi khi tạo viewport mới:", error);
+
+            // Kiểm tra lại element trước khi thử lại
+            if (!viewportRef.current || !viewportRef.current.isConnected) {
+              console.warn("Element không còn tồn tại, hủy thao tác");
+              return;
+            }
 
             // Nếu rendering engine đã bị hủy, tạo mới
             if (
@@ -260,10 +278,22 @@ const Viewport: React.FC<ViewportProps> = React.memo(({ id }) => {
           // Trích xuất thông tin DICOM
           await extractDicomInfo(imageId);
 
+          // Kiểm tra lại element trước khi tiếp tục
+          if (!viewportRef.current || !viewportRef.current.isConnected) {
+            console.warn("Element không còn tồn tại, hủy thao tác");
+            return;
+          }
+
           // Kiểm tra lại viewport sau khi tải hình ảnh
           try {
             // Kiểm tra xem rendering engine có còn tồn tại không
             if (renderingEngine.hasBeenDestroyed) {
+              // Kiểm tra lại element trước khi tạo mới
+              if (!viewportRef.current || !viewportRef.current.isConnected) {
+                console.warn("Element không còn tồn tại, hủy thao tác");
+                return;
+              }
+              
               renderingEngine = new cornerstone.RenderingEngine(
                 renderingEngineId
               );
@@ -282,6 +312,12 @@ const Viewport: React.FC<ViewportProps> = React.memo(({ id }) => {
             }
 
             if (!stackViewport) {
+              // Kiểm tra lại element trước khi tạo mới
+              if (!viewportRef.current || !viewportRef.current.isConnected) {
+                console.warn("Element không còn tồn tại, hủy thao tác");
+                return;
+              }
+              
               // Nếu viewport không còn tồn tại, tạo mới
               renderingEngine.enableElement({
                 viewportId,
@@ -303,6 +339,13 @@ const Viewport: React.FC<ViewportProps> = React.memo(({ id }) => {
               "Lỗi khi truy cập viewport sau khi tải hình ảnh:",
               viewportError
             );
+            
+            // Kiểm tra lại element trước khi thử lại
+            if (!viewportRef.current || !viewportRef.current.isConnected) {
+              console.warn("Element không còn tồn tại, hủy thao tác");
+              return;
+            }
+            
             // Kiểm tra xem lỗi có phải do rendering engine đã bị hủy không
             if (
               viewportError.message &&
@@ -352,82 +395,101 @@ const Viewport: React.FC<ViewportProps> = React.memo(({ id }) => {
 
   // Khởi tạo viewport khi component được mount
   useEffect(() => {
+    // Kiểm tra xem element có tồn tại không
     if (!viewportRef.current) return;
 
     // Xóa cache khi component được mount
     clearCache();
 
-    // Kiểm tra xem rendering engine có tồn tại không hoặc đã bị hủy
-    let renderingEngine = cornerstone.getRenderingEngine(renderingEngineId);
-    if (!renderingEngine || renderingEngine.hasBeenDestroyed) {
-      renderingEngine = new cornerstone.RenderingEngine(renderingEngineId);
-    }
-
-    const viewportInput = {
-      viewportId,
-      element: viewportRef.current,
-      type: cornerstone.Enums.ViewportType.STACK,
-      background: [0, 0, 0], // Đặt màu nền đen
-    };
-
-    try {
-      renderingEngine.enableElement(viewportInput);
-    } catch (error: any) {
-      console.error("Lỗi khi kích hoạt element:", error);
-
-      // Nếu rendering engine đã bị hủy, tạo mới
-      if (
-        error.message &&
-        error.message.includes("has been manually called to free up memory")
-      ) {
-        console.log("Rendering engine đã bị hủy, tạo mới...");
-        renderingEngine = new cornerstone.RenderingEngine(renderingEngineId);
-        renderingEngine.enableElement(viewportInput);
+    // Sử dụng setTimeout để đảm bảo element đã được render vào DOM
+    const initTimer = setTimeout(() => {
+      // Kiểm tra lại element trước khi khởi tạo
+      if (!viewportRef.current || !viewportRef.current.isConnected) {
+        console.warn("Element không tồn tại hoặc không được kết nối với DOM");
+        return;
       }
-    }
 
-    // Kiểm tra xem tool group đã tồn tại chưa
-    let toolGroup = cornerstoneTools.ToolGroupManager.getToolGroup(toolGroupId);
+      // Kiểm tra xem rendering engine có tồn tại không hoặc đã bị hủy
+      let renderingEngine = cornerstone.getRenderingEngine(renderingEngineId);
+      if (!renderingEngine || renderingEngine.hasBeenDestroyed) {
+        renderingEngine = new cornerstone.RenderingEngine(renderingEngineId);
+      }
 
-    if (!toolGroup) {
-      toolGroup =
-        cornerstoneTools.ToolGroupManager.createToolGroup(toolGroupId);
-    }
+      const viewportInput = {
+        viewportId,
+        element: viewportRef.current,
+        type: cornerstone.Enums.ViewportType.STACK,
+        background: [0, 0, 0], // Đặt màu nền đen
+      };
 
-    if (toolGroup) {
-      // Thêm các công cụ cần thiết
-      toolGroup.addTool(cornerstoneTools.PanTool.toolName);
-      toolGroup.addTool(cornerstoneTools.ZoomTool.toolName);
-      toolGroup.addTool(cornerstoneTools.WindowLevelTool.toolName);
-      toolGroup.addTool(cornerstoneTools.LengthTool.toolName);
-      toolGroup.addTool(cornerstoneTools.AngleTool.toolName);
-      toolGroup.addTool(cornerstoneTools.StackScrollTool.toolName);
-      toolGroup.addTool(cornerstoneTools.BidirectionalTool.toolName);
-      toolGroup.addTool(cornerstoneTools.ArrowAnnotateTool.toolName);
-      toolGroup.addTool(cornerstoneTools.EllipticalROITool.toolName);
-      toolGroup.addTool(cornerstoneTools.CircleROITool.toolName);
-      toolGroup.addTool(cornerstoneTools.PlanarFreehandROITool.toolName);
-      toolGroup.addTool(cornerstoneTools.SplineROITool.toolName);
+      try {
+        renderingEngine.enableElement(viewportInput);
+      } catch (error: any) {
+        console.error("Lỗi khi kích hoạt element:", error);
 
-      // Thiết lập công cụ mặc định
-      toolGroup.setToolActive(cornerstoneTools.WindowLevelTool.toolName, {
-        bindings: [{ mouseButton: 1 }],
-      });
+        // Kiểm tra lại element trước khi thử lại
+        if (!viewportRef.current || !viewportRef.current.isConnected) {
+          console.warn("Element không còn tồn tại, hủy thao tác");
+          return;
+        }
 
-      toolGroup.setToolActive(cornerstoneTools.PanTool.toolName, {
-        bindings: [{ mouseButton: 2 }],
-      });
+        // Nếu rendering engine đã bị hủy, tạo mới
+        if (
+          error.message &&
+          error.message.includes("has been manually called to free up memory")
+        ) {
+          console.log("Rendering engine đã bị hủy, tạo mới...");
+          renderingEngine = new cornerstone.RenderingEngine(renderingEngineId);
+          renderingEngine.enableElement(viewportInput);
+        }
+      }
 
-      toolGroup.setToolActive(cornerstoneTools.ZoomTool.toolName, {
-        bindings: [{ mouseButton: 3 }],
-      });
+      // Kiểm tra xem tool group đã tồn tại chưa
+      let toolGroup = cornerstoneTools.ToolGroupManager.getToolGroup(toolGroupId);
 
-      // Kết nối toolGroup với viewport
-      toolGroup.addViewport(viewportId, renderingEngineId);
-    }
+      if (!toolGroup) {
+        toolGroup =
+          cornerstoneTools.ToolGroupManager.createToolGroup(toolGroupId);
+      }
+
+      if (toolGroup) {
+        // Thêm các công cụ cần thiết
+        toolGroup.addTool(cornerstoneTools.PanTool.toolName);
+        toolGroup.addTool(cornerstoneTools.ZoomTool.toolName);
+        toolGroup.addTool(cornerstoneTools.WindowLevelTool.toolName);
+        toolGroup.addTool(cornerstoneTools.LengthTool.toolName);
+        toolGroup.addTool(cornerstoneTools.AngleTool.toolName);
+        toolGroup.addTool(cornerstoneTools.StackScrollTool.toolName);
+        toolGroup.addTool(cornerstoneTools.BidirectionalTool.toolName);
+        toolGroup.addTool(cornerstoneTools.ArrowAnnotateTool.toolName);
+        toolGroup.addTool(cornerstoneTools.EllipticalROITool.toolName);
+        toolGroup.addTool(cornerstoneTools.CircleROITool.toolName);
+        toolGroup.addTool(cornerstoneTools.PlanarFreehandROITool.toolName);
+        toolGroup.addTool(cornerstoneTools.SplineROITool.toolName);
+
+        // Thiết lập công cụ mặc định
+        toolGroup.setToolActive(cornerstoneTools.WindowLevelTool.toolName, {
+          bindings: [{ mouseButton: 1 }],
+        });
+
+        toolGroup.setToolActive(cornerstoneTools.PanTool.toolName, {
+          bindings: [{ mouseButton: 2 }],
+        });
+
+        toolGroup.setToolActive(cornerstoneTools.ZoomTool.toolName, {
+          bindings: [{ mouseButton: 3 }],
+        });
+
+        // Kết nối toolGroup với viewport
+        toolGroup.addViewport(viewportId, renderingEngineId);
+      }
+    }, 50); // Đợi 50ms để đảm bảo DOM đã được cập nhật
 
     // Cleanup khi component unmount
     return () => {
+      // Xóa timer nếu component unmount trước khi timer kết thúc
+      clearTimeout(initTimer);
+      
       // Xóa cache trước khi unmount
       clearCache();
 
@@ -454,15 +516,35 @@ const Viewport: React.FC<ViewportProps> = React.memo(({ id }) => {
       return;
     }
 
+    // Kiểm tra xem element có tồn tại và được kết nối với DOM không
+    if (!viewportRef.current.isConnected) {
+      console.warn("Element không được kết nối với DOM, bỏ qua tải hình ảnh");
+      setIsLoading(false);
+      return;
+    }
+
     const imageId = viewport.imageIds[viewport.currentImageIdIndex];
     if (!imageId) {
       setIsLoading(false);
       return;
     }
 
-    cornerstone.cache.purgeCache();
+    // Sử dụng setTimeout để đảm bảo DOM đã được cập nhật
+    const loadTimer = setTimeout(() => {
+      // Kiểm tra lại element trước khi tải hình ảnh
+      if (!viewportRef.current || !viewportRef.current.isConnected) {
+        console.warn("Element không còn tồn tại, hủy thao tác tải hình ảnh");
+        setIsLoading(false);
+        return;
+      }
+      
+      cornerstone.cache.purgeCache();
+      loadAndDisplayImage(imageId);
+    }, 50);
 
-    loadAndDisplayImage(imageId);
+    return () => {
+      clearTimeout(loadTimer);
+    };
   }, [viewport?.imageIds, viewport?.currentImageIdIndex, loadAndDisplayImage]);
 
   // Xử lý resize window

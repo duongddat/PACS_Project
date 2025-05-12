@@ -8,11 +8,11 @@ import {
   useNavigate,
 } from "react-router-dom";
 
-import "hammerjs";
-import "./App.css";
 import StudyList from "./components/StudyList/StudyList";
 import Viewer from "./components/Viewer/Viewer";
 import { initCornerstone } from "./utils/cornerstoneInit";
+import "hammerjs";
+import "./App.css";
 
 // Component để xử lý URL query params
 const ViewerRedirect: React.FC = () => {
@@ -42,7 +42,6 @@ function App() {
     const initialize = async () => {
       try {
         await initCornerstone();
-        console.log("Cornerstone đã được khởi tạo thành công");
       } catch (error) {
         console.error("Lỗi khi khởi tạo Cornerstone:", error);
       }

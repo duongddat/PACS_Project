@@ -74,7 +74,6 @@ const Toolbar: React.FC<ToolbarProps> = ({ viewportId, children }) => {
           bindings: [{ mouseButton: 1 }],
         });
         setActiveTool(toolName);
-        console.log(`Đã kích hoạt công cụ: ${toolName}`);
       } catch (error) {
         console.error(`Lỗi khi kích hoạt công cụ ${toolName}:`, error);
       }

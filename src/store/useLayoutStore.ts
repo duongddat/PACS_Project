@@ -1,4 +1,5 @@
 import { create } from "zustand";
+import { cache, getRenderingEngines } from "@cornerstonejs/core";
 
 export type LayoutType =
   | "1x1"
@@ -17,7 +18,10 @@ export type LayoutType =
 interface LayoutState {
   currentLayout: LayoutType;
   viewportCount: number;
+  layoutChangeTimestamp: number; // Thêm trường này
   setLayout: (layout: LayoutType) => void;
+  resetViewportCache: () => void;
+  forceRefreshViewports: () => void; // Thêm hàm này
   getViewportConfiguration: () => {
     rows: number;
     cols: number;
@@ -32,6 +36,7 @@ interface LayoutState {
 export const useLayoutStore = create<LayoutState>((set, get) => ({
   currentLayout: "1x1",
   viewportCount: 1,
+  layoutChangeTimestamp: Date.now(), // Khởi tạo với thời gian hiện tại
 
   setLayout: (layout: LayoutType) => {
     let viewportCount = 1;
@@ -64,7 +69,47 @@ export const useLayoutStore = create<LayoutState>((set, get) => ({
       viewportCount = 1;
     }
 
-    set({ currentLayout: layout, viewportCount });
+    // Xóa cache trước khi đặt layout mới
+    get().resetViewportCache();
+
+    // Cập nhật timestamp khi layout thay đổi
+    set({
+      currentLayout: layout,
+      viewportCount,
+      layoutChangeTimestamp: Date.now(),
+    });
+  },
+
+  // Thêm hàm mới để buộc tải lại viewport mà không thay đổi layout
+  forceRefreshViewports: () => {
+    // Xóa cache
+    get().resetViewportCache();
+
+    // Chỉ cập nhật timestamp để kích hoạt tải lại
+    set({ layoutChangeTimestamp: Date.now() });
+  },
+
+  resetViewportCache: () => {
+    try {
+      // Xóa tất cả cache của cornerstone
+      cache.purgeCache();
+
+      // Xóa tất cả các rendering engine
+      const renderingEngines = getRenderingEngines();
+      if (renderingEngines && renderingEngines.length > 0) {
+        renderingEngines.forEach((engine) => {
+          try {
+            if (engine && !engine.hasBeenDestroyed) {
+              engine.destroy();
+            }
+          } catch (error) {
+            console.warn("Lỗi khi hủy rendering engine:", error);
+          }
+        });
+      }
+    } catch (error) {
+      console.error("Lỗi khi xóa cache viewport:", error);
+    }
   },
 
   getViewportConfiguration: () => {

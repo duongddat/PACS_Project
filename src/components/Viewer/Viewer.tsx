@@ -1,4 +1,10 @@
-import React, { useEffect, useState, useRef, useCallback } from "react";
+import React, {
+  useEffect,
+  useState,
+  useRef,
+  useCallback,
+  useMemo,
+} from "react";
 import { useParams } from "react-router-dom";
 import { useStudyStore } from "../../store/studyStore";
 import { useViewportStore } from "../../store/viewportStore";
@@ -7,10 +13,10 @@ import { DicomWebApi } from "../../api/DicomWebApi";
 import Viewport from "./Viewport";
 import Toolbar from "./Toolbar";
 import LayoutSelector from "./LayoutSelector";
-import "./Viewer.css";
 import { initCornerstone } from "../../utils/cornerstoneInit";
 import { cornerstoneDestroy } from "../../utils/cornerstoneDestroy";
 import { Series } from "../../api/types";
+import "./Viewer.css";
 
 const Viewer: React.FC = () => {
   const { studyInstanceUID } = useParams<{ studyInstanceUID: string }>();
@@ -24,8 +30,8 @@ const Viewer: React.FC = () => {
   const [sidebarWidth, setSidebarWidth] = useState(300);
   const leftPanelRef = useRef<HTMLDivElement>(null);
   const resizeHandleRef = useRef<HTMLDivElement>(null);
-  // Thêm ref để theo dõi layout trước đó
   const prevLayoutRef = useRef<string | null>(null);
+  const prevSeriesRef = useRef<string | null>(null);
 
   const {
     fetchSeriesForStudy,
@@ -45,21 +51,40 @@ const Viewer: React.FC = () => {
   } = useViewportStore();
 
   // Lấy cấu hình layout từ useLayoutStore
-  const { currentLayout, getViewportConfiguration, setLayout } =
-    useLayoutStore();
-  const { rows, cols, viewports: viewportConfig } = getViewportConfiguration();
+  const {
+    currentLayout,
+    getViewportConfiguration,
+    setLayout,
+    forceRefreshViewports,
+    layoutChangeTimestamp,
+  } = useLayoutStore();
+
+  // Sử dụng useMemo để tránh tính toán lại cấu hình viewport khi không cần thiết
+  const {
+    rows,
+    cols,
+    viewports: viewportConfig,
+  } = useMemo(
+    () => getViewportConfiguration(),
+    [getViewportConfiguration, currentLayout]
+  );
 
   // Khởi tạo Cornerstone khi component được mount
   useEffect(() => {
+    let isMounted = true;
+
     const initialize = async () => {
       await initCornerstone();
-      setCornerstoneInitialized(true);
+      if (isMounted) {
+        setCornerstoneInitialized(true);
+      }
     };
 
     initialize();
 
     // Cleanup khi component unmount
     return () => {
+      isMounted = false;
       const cleanupCornerstone = async () => {
         await cornerstoneDestroy();
       };
@@ -121,6 +146,11 @@ const Viewer: React.FC = () => {
               setActiveViewportInStore(firstViewportId);
             }
           }
+
+          // Buộc tải lại viewport sau khi thay đổi layout
+          setTimeout(() => {
+            forceRefreshViewports();
+          }, 100);
         }
       } catch (error) {
         console.error("Lỗi khi khởi tạo viewport:", error);
@@ -134,9 +164,10 @@ const Viewer: React.FC = () => {
     viewportConfig,
     viewports,
     currentLayout,
+    forceRefreshViewports,
   ]);
 
-  // Tải hình ảnh khi series được chọn
+  // Tải hình ảnh khi series được chọn hoặc khi layout thay đổi
   useEffect(() => {
     if (
       studyInstanceUID &&
@@ -144,11 +175,18 @@ const Viewer: React.FC = () => {
       activeViewport &&
       cornerstoneInitialized
     ) {
-      loadImagesForViewport(
-        activeViewport,
-        studyInstanceUID,
-        currentSeries.SeriesInstanceUID
-      );
+      const currentSeriesUID = currentSeries.SeriesInstanceUID;
+
+      // Chỉ tải lại nếu series thay đổi hoặc layout thay đổi
+      if (prevSeriesRef.current !== currentSeriesUID || layoutChangeTimestamp) {
+        prevSeriesRef.current = currentSeriesUID;
+
+        loadImagesForViewport(
+          activeViewport,
+          studyInstanceUID,
+          currentSeriesUID
+        );
+      }
     }
   }, [
     studyInstanceUID,
@@ -156,6 +194,7 @@ const Viewer: React.FC = () => {
     activeViewport,
     loadImagesForViewport,
     cornerstoneInitialized,
+    layoutChangeTimestamp,
   ]);
 
   // Hàm để lấy thumbnail cho mỗi series - tối ưu hóa với useCallback
@@ -264,6 +303,9 @@ const Viewer: React.FC = () => {
       setCurrentSeries(selectedSeries);
 
       if (studyInstanceUID) {
+        // Xóa cache trước khi tải series mới
+        forceRefreshViewports();
+
         // Tải hình ảnh cho tất cả viewport hiện tại
         const loadPromises = viewportConfig
           .filter(
@@ -291,6 +333,7 @@ const Viewer: React.FC = () => {
       loadImagesForViewport,
       setCurrentSeries,
       currentSeries,
+      forceRefreshViewports,
     ]
   );
 
@@ -303,8 +346,14 @@ const Viewer: React.FC = () => {
   const handleLayoutChange = useCallback(
     (layoutId: string) => {
       setLayout(layoutId);
+
+      // Đợi một chút để layout được cập nhật
+      setTimeout(() => {
+        // Buộc tải lại tất cả viewport
+        forceRefreshViewports();
+      }, 100);
     },
-    [setLayout]
+    [setLayout, forceRefreshViewports]
   );
 
   // Hàm xử lý khi click vào viewport
@@ -321,13 +370,12 @@ const Viewer: React.FC = () => {
     // Kiểm tra nếu là thiết bị di động
     const checkMobile = () => {
       const newIsMobile = window.innerWidth <= 768;
-      if (newIsMobile !== isMobile) {
-        setIsMobile(newIsMobile);
-        if (newIsMobile) {
-          setIsSidebarCollapsed(true);
-        } else {
-          setIsSidebarCollapsed(false);
-        }
+
+      setIsMobile(newIsMobile);
+      if (newIsMobile) {
+        setIsSidebarCollapsed(true);
+      } else {
+        setIsSidebarCollapsed(false);
       }
     };
 
@@ -395,8 +443,8 @@ const Viewer: React.FC = () => {
     };
   }, [isSidebarCollapsed]);
 
-  // Hàm render các viewport theo cấu hình layout
-  const renderViewports = () => {
+  // Hàm render các viewport theo cấu hình layout - tối ưu với useMemo
+  const renderViewports = useMemo(() => {
     return (
       <div
         className="viewport-grid"
@@ -433,13 +481,23 @@ const Viewer: React.FC = () => {
                 activeViewport === vpConfig.id ? "active" : ""
               }`}
             >
-              <Viewport id={vpConfig.id} />
+              <Viewport
+                id={vpConfig.id}
+                key={`${vpConfig.id}-${layoutChangeTimestamp}`}
+              />
             </div>
           );
         })}
       </div>
     );
-  };
+  }, [
+    rows,
+    cols,
+    viewportConfig,
+    activeViewport,
+    handleViewportClick,
+    layoutChangeTimestamp,
+  ]);
 
   // Cập nhật phần render series thumbnails
   return (
@@ -531,7 +589,7 @@ const Viewer: React.FC = () => {
               <Toolbar viewportId={activeViewport}>
                 <LayoutSelector onLayoutChange={handleLayoutChange} />
               </Toolbar>
-              {renderViewports()}
+              {renderViewports}
             </>
           ) : (
             <div className="loading-container">
