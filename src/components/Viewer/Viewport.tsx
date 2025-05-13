@@ -65,8 +65,8 @@ const Viewport: React.FC<ViewportProps> = React.memo(({ id }) => {
   const toolGroupId = `toolgroup-${id}`;
   const [isLoading, setIsLoading] = useState(false);
   const metadataCacheRef = useRef<Map<string, any>>(new Map());
+  const previousImageIdRef = useRef<string | null>(null);
 
-  // State để lưu trữ thông tin DICOM
   const [dicomInfo, setDicomInfo] = useState({
     studyDate: "",
     seriesDescription: "",
@@ -77,22 +77,17 @@ const Viewport: React.FC<ViewportProps> = React.memo(({ id }) => {
     orientation: { top: "A", right: "R", bottom: "P", left: "L" },
   });
 
-  // Hàm để trích xuất thông tin DICOM từ hình ảnh
   const extractDicomInfo = useCallback(async (imageId: string) => {
     try {
-      // Kiểm tra cache trước khi tải lại
       if (metadataCacheRef.current.has(imageId)) {
         setDicomInfo(metadataCacheRef.current.get(imageId));
         return;
       }
 
-      // Tải hình ảnh để lấy metadata nếu chưa có trong cache
       const metadata = metaData.get("instance", imageId);
 
       if (!metadata) {
-        // Nếu metadata chưa có, tải hình ảnh để lấy metadata
         await imageLoader.loadAndCacheImage(imageId);
-        // Thử lấy metadata lại sau khi tải
         const updatedMetadata = metaData.get("instance", imageId);
         if (!updatedMetadata) return;
       }
@@ -100,7 +95,6 @@ const Viewport: React.FC<ViewportProps> = React.memo(({ id }) => {
       const finalMetadata = metadata || metaData.get("instance", imageId);
 
       if (finalMetadata) {
-        // Trích xuất thông tin từ metadata
         const studyDate = finalMetadata.StudyDate
           ? `${finalMetadata.StudyDate.substring(
               6,
@@ -115,12 +109,10 @@ const Viewport: React.FC<ViewportProps> = React.memo(({ id }) => {
         const patientName = finalMetadata.PatientName || "";
         const patientId = finalMetadata.PatientID || "";
 
-        // Lấy thông tin window/level từ hình ảnh
         const image = await imageLoader.loadAndCacheImage(imageId);
         const windowWidth = image.windowWidth || 0;
         const windowCenter = image.windowCenter || 0;
 
-        // Xử lý trường hợp windowWidth và windowCenter là mảng
         const processedWindowWidth = Array.isArray(windowWidth)
           ? windowWidth[0]
           : windowWidth;
@@ -138,10 +130,8 @@ const Viewport: React.FC<ViewportProps> = React.memo(({ id }) => {
           orientation: { top: "A", right: "R", bottom: "P", left: "L" },
         };
 
-        // Lưu vào cache
         metadataCacheRef.current.set(imageId, newDicomInfo);
 
-        // Cập nhật state
         setDicomInfo(newDicomInfo);
       }
     } catch (error) {
@@ -149,39 +139,31 @@ const Viewport: React.FC<ViewportProps> = React.memo(({ id }) => {
     }
   }, []);
 
-  // Hàm để điều chỉnh hình hình hình hình hình hình hình hình hình hình hình ảnh vừa với viewport
   const fitImageToViewport = useCallback((stackViewport: StackViewport) => {
     try {
-      // Lấy kích thước của viewport
       const canvas = stackViewport.getCanvas();
       if (!canvas) return;
 
       const viewportWidth = canvas.width;
       const viewportHeight = canvas.height;
 
-      // Lấy kích thước của hình ảnh
       const image = stackViewport.getImageData();
       if (!image) return;
 
       const imageWidth = image.dimensions[0];
       const imageHeight = image.dimensions[1];
 
-      // Tính toán tỷ lệ để hình ảnh vừa với viewport
       const widthRatio = viewportWidth / imageWidth;
       const heightRatio = viewportHeight / imageHeight;
 
-      // Chọn tỷ lệ nhỏ hơn để đảm bảo hình ảnh vừa với viewport
       const scale = Math.min(widthRatio, heightRatio) * 0.9;
 
-      // Thiết lập camera với tỷ lệ mới
       const camera = stackViewport.getCamera();
       if (camera) {
-        // Đặt lại vị trí camera về trung tâm
         camera.position = [0, 0, 0];
         camera.parallelScale = 1 / scale;
         stackViewport.setCamera(camera);
 
-        // Đặt lại các thông số khác
         stackViewport.resetCamera();
         stackViewport.resetProperties();
       }
@@ -190,41 +172,40 @@ const Viewport: React.FC<ViewportProps> = React.memo(({ id }) => {
     }
   }, []);
 
-  // Hàm tải và hiển thị hình ảnh
   const loadAndDisplayImage = useCallback(
     async (imageId: string) => {
+      if (previousImageIdRef.current === imageId) {
+        return;
+      }
+
+      previousImageIdRef.current = imageId;
+
       if (!viewportRef.current) {
-        console.warn("Viewport ref không tồn tại");
         return;
       }
 
       setIsLoading(true);
 
       try {
-        // Kiểm tra xem element có tồn tại không trước khi thực hiện bất kỳ thao tác nào
         if (!viewportRef.current || !viewportRef.current.isConnected) {
           return;
         }
 
         let renderingEngine = getRenderingEngine(renderingEngineId);
 
-        // Kiểm tra xem rendering engine có tồn tại không hoặc đã bị hủy
         if (!renderingEngine || renderingEngine.hasBeenDestroyed) {
           renderingEngine = new RenderingEngine(renderingEngineId);
         }
 
-        // Lưu trữ tham chiếu đến viewport hiện tại
         let stackViewport;
         try {
           stackViewport = renderingEngine.getViewport(
             viewportId
           ) as StackViewport;
         } catch (error) {
-          console.log("Không thể lấy viewport, tạo mới...");
           stackViewport = null;
         }
 
-        // Kiểm tra lại element trước khi tạo viewport mới
         if (!viewportRef.current || !viewportRef.current.isConnected) {
           return;
         }
@@ -247,13 +228,10 @@ const Viewport: React.FC<ViewportProps> = React.memo(({ id }) => {
           } catch (error: any) {
             console.error("Lỗi khi tạo viewport mới:", error);
 
-            // Kiểm tra lại element trước khi thử lại
             if (!viewportRef.current || !viewportRef.current.isConnected) {
-              console.warn("Element không còn tồn tại, hủy thao tác");
               return;
             }
 
-            // Nếu rendering engine đã bị hủy, tạo mới
             if (
               error.message &&
               error.message.includes(
@@ -275,28 +253,20 @@ const Viewport: React.FC<ViewportProps> = React.memo(({ id }) => {
           }
         }
 
-        // Reset viewport
         stackViewport.reset();
         stackViewport.render();
 
-        // Tải hình ảnh và trích xuất metadata
         try {
           await imageLoader.loadAndCacheImage(imageId);
-
-          // Trích xuất thông tin DICOM
           await extractDicomInfo(imageId);
 
-          // Kiểm tra lại element trước khi tiếp tục
           if (!viewportRef.current || !viewportRef.current.isConnected) {
             console.warn("Element không còn tồn tại, hủy thao tác");
             return;
           }
 
-          // Kiểm tra lại viewport sau khi tải hình ảnh
           try {
-            // Kiểm tra xem rendering engine có còn tồn tại không
             if (renderingEngine.hasBeenDestroyed) {
-              // Kiểm tra lại element trước khi tạo mới
               if (!viewportRef.current || !viewportRef.current.isConnected) {
                 return;
               }
@@ -317,12 +287,10 @@ const Viewport: React.FC<ViewportProps> = React.memo(({ id }) => {
             }
 
             if (!stackViewport) {
-              // Kiểm tra lại element trước khi tạo mới
               if (!viewportRef.current || !viewportRef.current.isConnected) {
                 return;
               }
 
-              // Nếu viewport không còn tồn tại, tạo mới
               renderingEngine.enableElement({
                 viewportId,
                 element: viewportRef.current,
@@ -334,7 +302,6 @@ const Viewport: React.FC<ViewportProps> = React.memo(({ id }) => {
               ) as StackViewport;
             }
 
-            // Thiết lập stack và render
             stackViewport.setStack([imageId]);
             fitImageToViewport(stackViewport);
             stackViewport.render();
@@ -344,13 +311,10 @@ const Viewport: React.FC<ViewportProps> = React.memo(({ id }) => {
               viewportError
             );
 
-            // Kiểm tra lại element trước khi thử lại
             if (!viewportRef.current || !viewportRef.current.isConnected) {
-              console.warn("Element không còn tồn tại, hủy thao tác");
               return;
             }
 
-            // Kiểm tra xem lỗi có phải do rendering engine đã bị hủy không
             if (
               viewportError.message &&
               viewportError.message.includes(
@@ -388,29 +352,20 @@ const Viewport: React.FC<ViewportProps> = React.memo(({ id }) => {
     [renderingEngineId, viewportId, fitImageToViewport, extractDicomInfo]
   );
 
-  // Thêm hàm để xóa cache khi cần thiết
   const clearCache = useCallback(() => {
     metadataCacheRef.current.clear();
-    // Xóa cache của cornerstone
     cache.purgeCache();
   }, []);
 
-  // Khởi tạo viewport khi component được mount
   useEffect(() => {
-    // Kiểm tra xem element có tồn tại không
     if (!viewportRef.current) return;
-
-    // Xóa cache khi component được mount
     clearCache();
 
-    // Sử dụng setTimeout để đảm bảo element đã được render vào DOM
     const initTimer = setTimeout(() => {
-      // Kiểm tra lại element trước khi khởi tạo
       if (!viewportRef.current || !viewportRef.current.isConnected) {
         return;
       }
 
-      // Kiểm tra xem rendering engine có tồn tại không hoặc đã bị hủy
       let renderingEngine = getRenderingEngine(renderingEngineId);
       if (!renderingEngine || renderingEngine.hasBeenDestroyed) {
         renderingEngine = new RenderingEngine(renderingEngineId);
@@ -420,7 +375,7 @@ const Viewport: React.FC<ViewportProps> = React.memo(({ id }) => {
         viewportId,
         element: viewportRef.current,
         type: Enums.ViewportType.STACK,
-        background: [0, 0, 0], // Đặt màu nền đen
+        background: [0, 0, 0],
       };
 
       try {
@@ -428,23 +383,19 @@ const Viewport: React.FC<ViewportProps> = React.memo(({ id }) => {
       } catch (error: any) {
         console.error("Lỗi khi kích hoạt element:", error);
 
-        // Kiểm tra lại element trước khi thử lại
         if (!viewportRef.current || !viewportRef.current.isConnected) {
           return;
         }
 
-        // Nếu rendering engine đã bị hủy, tạo mới
         if (
           error.message &&
           error.message.includes("has been manually called to free up memory")
         ) {
-          console.log("Rendering engine đã bị hủy, tạo mới...");
           renderingEngine = new RenderingEngine(renderingEngineId);
           renderingEngine.enableElement(viewportInput);
         }
       }
 
-      // Kiểm tra xem tool group đã tồn tại chưa
       let toolGroup = ToolGroupManager.getToolGroup(toolGroupId);
 
       if (!toolGroup) {
@@ -452,7 +403,6 @@ const Viewport: React.FC<ViewportProps> = React.memo(({ id }) => {
       }
 
       if (toolGroup) {
-        // Thêm các công cụ cần thiết
         toolGroup.addTool(PanTool.toolName);
         toolGroup.addTool(ZoomTool.toolName);
         toolGroup.addTool(WindowLevelTool.toolName);
@@ -466,7 +416,6 @@ const Viewport: React.FC<ViewportProps> = React.memo(({ id }) => {
         toolGroup.addTool(PlanarFreehandROITool.toolName);
         toolGroup.addTool(SplineROITool.toolName);
 
-        // Thiết lập công cụ mặc định
         toolGroup.setToolActive(WindowLevelTool.toolName, {
           bindings: [{ mouseButton: 1 }],
         });
@@ -479,17 +428,12 @@ const Viewport: React.FC<ViewportProps> = React.memo(({ id }) => {
           bindings: [{ mouseButton: 3 }],
         });
 
-        // Kết nối toolGroup với viewport
         toolGroup.addViewport(viewportId, renderingEngineId);
       }
-    }, 50); // Đợi 50ms để đảm bảo DOM đã được cập nhật
+    }, 50);
 
-    // Cleanup khi component unmount
     return () => {
-      // Xóa timer nếu component unmount trước khi timer kết thúc
       clearTimeout(initTimer);
-
-      // Xóa cache trước khi unmount
       clearCache();
 
       try {
@@ -508,16 +452,13 @@ const Viewport: React.FC<ViewportProps> = React.memo(({ id }) => {
     };
   }, [id, renderingEngineId, viewportId, toolGroupId, clearCache]);
 
-  // Xử lý khi imageIds hoặc currentImageIdIndex thay đổi
   useEffect(() => {
     if (!viewportRef.current || !viewport || !viewport.imageIds.length) {
       setIsLoading(false);
       return;
     }
 
-    // Kiểm tra xem element có tồn tại và được kết nối với DOM không
     if (!viewportRef.current.isConnected) {
-      console.warn("Element không được kết nối với DOM, bỏ qua tải hình ảnh");
       setIsLoading(false);
       return;
     }
@@ -528,16 +469,12 @@ const Viewport: React.FC<ViewportProps> = React.memo(({ id }) => {
       return;
     }
 
-    // Sử dụng setTimeout để đảm bảo DOM đã được cập nhật
     const loadTimer = setTimeout(() => {
-      // Kiểm tra lại element trước khi tải hình ảnh
       if (!viewportRef.current || !viewportRef.current.isConnected) {
-        console.warn("Element không còn tồn tại, hủy thao tác tải hình ảnh");
         setIsLoading(false);
         return;
       }
 
-      cache.purgeCache();
       loadAndDisplayImage(imageId);
     }, 50);
 
@@ -546,11 +483,9 @@ const Viewport: React.FC<ViewportProps> = React.memo(({ id }) => {
     };
   }, [viewport?.imageIds, viewport?.currentImageIdIndex, loadAndDisplayImage]);
 
-  // Xử lý resize window
   useEffect(() => {
     if (!viewportRef.current) return;
 
-    // Tối ưu: Sử dụng ResizeObserver thay vì window resize event
     const resizeObserver = new ResizeObserver(
       debounce(() => {
         if (!viewport || !viewport.imageIds.length || isLoading) return;
@@ -562,23 +497,17 @@ const Viewport: React.FC<ViewportProps> = React.memo(({ id }) => {
           viewportId
         ) as StackViewport;
         if (!stackViewport) return;
-
-        // Cập nhật kích thước canvas, giữ camera
         renderingEngine.resize(true, true);
-
-        // Tối ưu: Chỉ cần render lại, không cần tải lại hình ảnh
         stackViewport.render();
       }, 300)
     );
 
     resizeObserver.observe(viewportRef.current);
-
     return () => {
       resizeObserver.disconnect();
     };
   }, [viewport, renderingEngineId, viewportId, isLoading]);
 
-  // Xử lý sự kiện cuộn chuột để chuyển đổi frame
   useEffect(() => {
     if (!viewportRef.current) return;
 
@@ -588,21 +517,19 @@ const Viewport: React.FC<ViewportProps> = React.memo(({ id }) => {
       if (
         !viewport ||
         !viewport.imageIds.length ||
-        viewport.imageIds.length <= 1
+        viewport.imageIds.length <= 1 ||
+        isLoading
       )
         return;
 
       const { nextImage, previousImage } = useViewportStore.getState();
 
-      // Xác định hướng cuộn
       if (event.deltaY > 0) {
-        // Cuộn xuống - chuyển đến hình ảnh tiếp theo
         nextImage(id);
       } else {
-        // Cuộn lên - chuyển đến hình ảnh trước đó
         previousImage(id);
       }
-    }, 80);
+    }, 150);
 
     const viewportElement = viewportRef.current;
     viewportElement.addEventListener("wheel", handleWheel, { passive: false });
@@ -610,13 +537,12 @@ const Viewport: React.FC<ViewportProps> = React.memo(({ id }) => {
     return () => {
       viewportElement.removeEventListener("wheel", handleWheel);
     };
-  }, [id, viewport]);
+  }, [id, viewport, isLoading]);
 
   const handleViewportClick = useCallback(() => {
     setActiveViewport(id);
   }, [id, setActiveViewport]);
 
-  // Tính toán các giá trị cho thanh thước dọc
   const scrollIndicatorStyle = useMemo(() => {
     if (!viewport || !viewport.imageIds?.length) return {};
 
@@ -625,10 +551,8 @@ const Viewport: React.FC<ViewportProps> = React.memo(({ id }) => {
 
     if (totalFrames <= 1) return { top: "0%", height: "100%" };
 
-    // Tính chiều cao của thanh chỉ báo dựa trên số lượng frame
     const height = 100 / totalFrames;
 
-    // Tính vị trí top dựa trên frame hiện tại
     const top = (currentFrame / (totalFrames - 1)) * (100 - height);
 
     return {
@@ -637,7 +561,6 @@ const Viewport: React.FC<ViewportProps> = React.memo(({ id }) => {
     };
   }, [viewport?.imageIds?.length, viewport?.currentImageIdIndex]);
 
-  // Cập nhật phần render của component
   return (
     <div
       ref={viewportRef}
@@ -660,19 +583,14 @@ const Viewport: React.FC<ViewportProps> = React.memo(({ id }) => {
 
       {viewport && viewport.imageIds.length > 0 && (
         <>
-          {/* Thông tin DICOM góc trên bên trái */}
           <div className="dicom-info dicom-info-top-left">
             <p>{dicomInfo.studyDate}</p>
             <p>{dicomInfo.seriesDescription}</p>
           </div>
-
-          {/* Thông tin DICOM góc trên bên phải */}
           <div className="dicom-info dicom-info-top-right">
             <p>{dicomInfo.patientName}</p>
             <p>{dicomInfo.patientId}</p>
           </div>
-
-          {/* Marker hướng */}
           <div className="orientation-marker orientation-marker-top">
             {dicomInfo.orientation.top}
           </div>
@@ -685,23 +603,17 @@ const Viewport: React.FC<ViewportProps> = React.memo(({ id }) => {
           <div className="orientation-marker orientation-marker-left">
             {dicomInfo.orientation.left}
           </div>
-
-          {/* Thông tin window/level */}
           <div className="dicom-info dicom-info-bottom-left">
             <p>
               W: {dicomInfo.windowWidth} / L: {dicomInfo.windowCenter}
             </p>
           </div>
-
-          {/* Thêm hiển thị số frame ở góc dưới bên phải */}
           <div className="dicom-info dicom-info-bottom-right">
             <p>
               Frame: {viewport.currentImageIdIndex + 1} /{" "}
               {viewport.imageIds.length}
             </p>
           </div>
-
-          {/* Thanh cuộn dọc */}
           {viewport.imageIds.length > 1 && (
             <div className="vertical-scroll-container">
               <div className="vertical-scroll-bar">

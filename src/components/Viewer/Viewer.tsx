@@ -408,36 +408,27 @@ const Viewer = React.memo(() => {
 
   // Hàm xử lý khi chọn series
   const handleSeriesSelect = useCallback(
-    (selectedSeries: Series) => {
-      // Kiểm tra nếu series đã được chọn, không làm gì cả
-      if (
-        currentSeries?.SeriesInstanceUID === selectedSeries.SeriesInstanceUID
-      ) {
-        return;
-      }
+    async (seriesItem: Series) => {
+      try {
+        if (!studyInstanceUID) return;
 
-      setCurrentSeries(selectedSeries);
+        // Chỉ cập nhật viewport đang active
+        if (activeViewport) {
+          // Lưu trạng thái series hiện tại
+          setCurrentSeries(seriesItem);
 
-      if (studyInstanceUID) {
-        // Xóa cache trước khi tải series mới
-        forceRefreshViewports();
-
-        // Chỉ tải hình ảnh cho viewport đang được chọn
-        loadImagesForViewport(
-          activeViewport,
-          studyInstanceUID,
-          selectedSeries.SeriesInstanceUID
-        );
+          // Chỉ load series mới cho viewport đang active
+          await loadImagesForViewport(
+            activeViewport,
+            studyInstanceUID,
+            seriesItem.SeriesInstanceUID
+          );
+        }
+      } catch (error) {
+        console.error("Lỗi khi chọn series:", error);
       }
     },
-    [
-      studyInstanceUID,
-      activeViewport,
-      loadImagesForViewport,
-      setCurrentSeries,
-      currentSeries,
-      forceRefreshViewports,
-    ]
+    [activeViewport, loadImagesForViewport, setCurrentSeries, studyInstanceUID]
   );
 
   // Hàm xử lý đóng/mở sidebar

@@ -33,7 +33,6 @@ const LayoutSelector: React.FC<LayoutSelectorProps> = ({ onLayoutChange }) => {
 
   const { setLayout, currentLayout } = useLayoutStore();
 
-  // Danh sách các layout phổ biến - chuyển thành useMemo để tránh tạo lại mỗi lần render
   const commonLayouts = useMemo<LayoutOption[]>(
     () => [
       { id: "1x1", icon: "layout-1x1", title: "1x1" },
@@ -46,7 +45,6 @@ const LayoutSelector: React.FC<LayoutSelectorProps> = ({ onLayoutChange }) => {
     []
   );
 
-  // Kiểm tra vị trí hiển thị dropdown - tối ưu với useCallback
   const handleResize = useCallback(() => {
     const isMobile = window.innerWidth <= 768;
     setDropdownPosition(isMobile ? "right" : "bottom");
@@ -60,7 +58,6 @@ const LayoutSelector: React.FC<LayoutSelectorProps> = ({ onLayoutChange }) => {
     };
   }, [handleResize]);
 
-  // Đóng dropdown khi click ra ngoài - tối ưu với useCallback
   const handleClickOutside = useCallback((event: MouseEvent) => {
     if (
       dropdownRef.current &&
@@ -79,7 +76,6 @@ const LayoutSelector: React.FC<LayoutSelectorProps> = ({ onLayoutChange }) => {
     };
   }, [handleClickOutside]);
 
-  // Điều chỉnh vị trí dropdown khi mở
   const adjustDropdownPosition = useCallback(() => {
     if (isOpen && dropdownRef.current && buttonRef.current) {
       const dropdown = dropdownRef.current;
@@ -88,13 +84,11 @@ const LayoutSelector: React.FC<LayoutSelectorProps> = ({ onLayoutChange }) => {
       const viewportWidth = window.innerWidth;
       const viewportHeight = window.innerHeight;
 
-      // Reset các style trước khi tính toán lại
       dropdown.style.left = "";
       dropdown.style.right = "";
       dropdown.style.top = "";
       dropdown.style.bottom = "";
 
-      // Xóa tất cả các class position cũ
       dropdown.classList.remove(
         "layout-dropdown-bottom",
         "layout-dropdown-top",
@@ -103,44 +97,36 @@ const LayoutSelector: React.FC<LayoutSelectorProps> = ({ onLayoutChange }) => {
       );
 
       if (dropdownPosition === "bottom") {
-        // Kiểm tra không gian bên dưới
         const bottomSpace = viewportHeight - rect.bottom;
         if (dropdown.offsetHeight > bottomSpace) {
-          // Nếu không đủ không gian bên dưới, hiển thị bên trên
           dropdown.style.bottom = rect.height + 5 + "px";
           dropdown.style.top = "auto";
           dropdown.classList.add("layout-dropdown-top");
         } else {
-          // Hiển thị bên dưới
           dropdown.style.top = "100%";
           dropdown.style.right = "0";
           dropdown.style.marginTop = "5px";
           dropdown.classList.add("layout-dropdown-bottom");
         }
 
-        // Kiểm tra không gian bên phải
         if (rect.right + dropdown.offsetWidth > viewportWidth) {
           dropdown.style.right = "0";
           dropdown.style.left = "auto";
         }
       } else if (dropdownPosition === "right") {
-        // Kiểm tra không gian bên phải
         const rightSpace = viewportWidth - rect.right;
 
         if (dropdown.offsetWidth > rightSpace) {
-          // Nếu không đủ không gian bên phải, hiển thị bên trái
           dropdown.style.right = rect.width + 5 + "px";
           dropdown.style.left = "auto";
           dropdown.classList.add("layout-dropdown-left");
         } else {
-          // Hiển thị bên phải
           dropdown.style.left = "100%";
           dropdown.style.top = "0";
           dropdown.style.marginLeft = "5px";
           dropdown.classList.add("layout-dropdown-right");
         }
 
-        // Kiểm tra không gian bên dưới
         if (rect.top + dropdown.offsetHeight > viewportHeight) {
           const topSpace = rect.top;
           const availableHeight = Math.max(
@@ -165,7 +151,6 @@ const LayoutSelector: React.FC<LayoutSelectorProps> = ({ onLayoutChange }) => {
   useEffect(() => {
     adjustDropdownPosition();
 
-    // Thêm sự kiện resize để điều chỉnh vị trí dropdown khi kích thước màn hình thay đổi
     if (isOpen) {
       window.addEventListener("resize", adjustDropdownPosition);
       return () => {
@@ -191,7 +176,6 @@ const LayoutSelector: React.FC<LayoutSelectorProps> = ({ onLayoutChange }) => {
     [onLayoutChange, setLayout]
   );
 
-  // Xử lý chọn layout tùy chỉnh - tối ưu với useCallback
   const handleCustomLayoutSelect = useCallback(
     (rows: number, cols: number) => {
       try {
@@ -214,12 +198,10 @@ const LayoutSelector: React.FC<LayoutSelectorProps> = ({ onLayoutChange }) => {
     [onLayoutChange, setLayout]
   );
 
-  // Xử lý hover vào cell - tối ưu với useCallback
   const handleCellHover = useCallback((row: number, col: number) => {
     setHoveredCell({ row, col });
   }, []);
 
-  // Render custom grid - tối ưu với useMemo
   const customGridCells = useMemo(() => {
     const maxRows = 4;
     const maxCols = 4;
@@ -246,7 +228,6 @@ const LayoutSelector: React.FC<LayoutSelectorProps> = ({ onLayoutChange }) => {
     return grid;
   }, [hoveredCell, handleCellHover, handleCustomLayoutSelect]);
 
-  // Xử lý click vào nút - tối ưu với useCallback
   const handleButtonClick = useCallback(
     (e: React.MouseEvent) => {
       e.stopPropagation();
@@ -255,12 +236,10 @@ const LayoutSelector: React.FC<LayoutSelectorProps> = ({ onLayoutChange }) => {
     [isOpen]
   );
 
-  // Xử lý click vào dropdown - tối ưu với useCallback
   const handleDropdownClick = useCallback((e: React.MouseEvent) => {
     e.stopPropagation();
   }, []);
 
-  // Xử lý chuyển tab - tối ưu với useCallback
   const handleTabChange = useCallback((tab: string) => {
     setActiveTab(tab);
   }, []);

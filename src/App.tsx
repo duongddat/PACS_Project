@@ -1,4 +1,4 @@
-import React, { useEffect } from "react";
+import React, { useEffect, Suspense, lazy } from "react";
 import {
   BrowserRouter as Router,
   Routes,
@@ -7,14 +7,15 @@ import {
   useLocation,
   useNavigate,
 } from "react-router-dom";
-
-import StudyList from "./components/StudyList/StudyList";
-import Viewer from "./components/Viewer/Viewer";
 import { initCornerstone } from "./utils/cornerstoneInit";
 import "hammerjs";
 import "./App.css";
 
-// Component để xử lý URL query params
+// 👉 Lazy loading các component lớn
+const StudyList = lazy(() => import("./components/StudyList/StudyList"));
+const Viewer = lazy(() => import("./components/Viewer/Viewer"));
+
+// ✅ Tách riêng component Redirect
 const ViewerRedirect: React.FC = () => {
   const location = useLocation();
   const navigate = useNavigate();
@@ -24,20 +25,17 @@ const ViewerRedirect: React.FC = () => {
     const studyInstanceUIDs = params.get("StudyInstanceUIDs");
 
     if (studyInstanceUIDs) {
-      // Nếu có nhiều StudyInstanceUID, lấy cái đầu tiên
       const firstStudyUID = studyInstanceUIDs.split(",")[0];
-      navigate(`/viewer/${firstStudyUID}`);
+      navigate(`/viewer/${firstStudyUID}`, { replace: true });
     } else {
-      // Nếu không có StudyInstanceUID, chuyển về trang danh sách
-      navigate("/");
+      navigate("/", { replace: true });
     }
   }, [location, navigate]);
 
   return <div>Đang chuyển hướng...</div>;
 };
 
-function App() {
-  // Khởi tạo Cornerstone khi ứng dụng khởi động
+const App: React.FC = () => {
   useEffect(() => {
     const initialize = async () => {
       try {
@@ -53,15 +51,17 @@ function App() {
   return (
     <Router>
       <div className="App dark-theme">
-        <Routes>
-          <Route path="/" element={<StudyList />} />
-          <Route path="/viewer" element={<ViewerRedirect />} />
-          <Route path="/viewer/:studyInstanceUID" element={<Viewer />} />
-          <Route path="*" element={<Navigate to="/" replace />} />
-        </Routes>
+        <Suspense fallback={<div>Đang tải...</div>}>
+          <Routes>
+            <Route path="/" element={<StudyList />} />
+            <Route path="/viewer" element={<ViewerRedirect />} />
+            <Route path="/viewer/:studyInstanceUID" element={<Viewer />} />
+            <Route path="*" element={<Navigate to="/" replace />} />
+          </Routes>
+        </Suspense>
       </div>
     </Router>
   );
-}
+};
 
 export default App;

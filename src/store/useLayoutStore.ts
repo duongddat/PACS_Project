@@ -91,22 +91,21 @@ export const useLayoutStore = create<LayoutState>((set, get) => ({
 
   resetViewportCache: () => {
     try {
-      // Xóa tất cả cache của cornerstone
+      // Xóa cache nhưng không hủy tất cả rendering engines
       cache.purgeCache();
 
-      // Xóa tất cả các rendering engine
-      const renderingEngines = getRenderingEngines();
-      if (renderingEngines && renderingEngines.length > 0) {
-        renderingEngines.forEach((engine) => {
-          try {
-            if (engine && !engine.hasBeenDestroyed) {
-              engine.destroy();
-            }
-          } catch (error) {
-            console.warn("Lỗi khi hủy rendering engine:", error);
-          }
-        });
-      }
+      // const renderingEngines = getRenderingEngines();
+      // if (renderingEngines && renderingEngines.length > 0) {
+      //   renderingEngines.forEach((engine) => {
+      //     try {
+      //       if (engine && !engine.hasBeenDestroyed) {
+      //         engine.destroy();
+      //       }
+      //     } catch (error) {
+      //       console.warn("Lỗi khi hủy rendering engine:", error);
+      //     }
+      //   });
+      // }
     } catch (error) {
       console.error("Lỗi khi xóa cache viewport:", error);
     }
