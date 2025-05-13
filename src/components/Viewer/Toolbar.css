@@ -1,16 +1,16 @@
-/* Toolbar - giữ nguyên cấu trúc hiện tại */
+/* Toolbar */
 .toolbar {
   display: flex;
-  background-color: var(--dark-bg-secondary);
-  padding: 6px 10px;
-  border-bottom: 1px solid var(--dark-border-color);
-  gap: 24px;
-  box-shadow: var(--shadow-sm);
-  align-items: center;
   flex-wrap: wrap;
+  align-items: center;
+  gap: 24px;
+  padding: 6px 10px;
+  margin: 5px 0;
+  background: var(--dark-bg-secondary);
+  border-bottom: 1px solid var(--dark-border-color);
+  box-shadow: var(--shadow-sm);
   position: relative;
   z-index: 100;
-  margin: 5px 0;
 }
 
 .tool-group {
@@ -24,69 +24,63 @@
   position: absolute;
   right: -12px;
   top: 50%;
+  transform: translateY(-50%);
   height: 24px;
   width: 1px;
-  background-color: var(--dark-border-color);
-  transform: translateY(-50%);
+  background: var(--dark-border-color);
 }
 
-/* Cải thiện style cho tool button */
+/* Tool Button */
 .tool-button {
-  background-color: var(--dark-bg-tertiary);
-  border: 1px solid var(--dark-border-color);
-  color: var(--dark-text-secondary);
-  width: 40px;
-  height: 40px;
-  border-radius: var(--border-radius);
   display: flex;
   justify-content: center;
   align-items: center;
+  width: 40px;
+  height: 40px;
+  background: var(--dark-bg-tertiary);
+  border: 1px solid var(--dark-border-color);
+  color: var(--dark-text-secondary);
+  border-radius: var(--border-radius);
   cursor: pointer;
-  transition: all var(--transition-speed) var(--transition-function);
-  position: relative;
   outline: none;
+  position: relative;
+  transition: all var(--transition-speed) var(--transition-function);
 }
 
 .tool-button:hover {
-  background-color: var(--dark-bg-elevated);
+  background: var(--dark-bg-elevated);
   color: var(--dark-text-primary);
   transform: translateY(-2px);
   box-shadow: var(--shadow-sm);
 }
 
 .tool-button.active {
-  background-color: var(--primary-bg-light);
+  background: var(--primary-bg-light);
   color: var(--primary-color);
   border-color: var(--primary-color);
   box-shadow: 0 0 0 1px var(--primary-color);
 }
 
-/* Thêm hiệu ứng ripple khi click */
 .tool-button::after {
   content: "";
-  display: block;
   position: absolute;
-  width: 100%;
-  height: 100%;
-  top: 0;
-  left: 0;
+  inset: 0;
   pointer-events: none;
-  background-image: radial-gradient(circle, #fff 10%, transparent 10.01%);
-  background-repeat: no-repeat;
-  background-position: 50%;
-  transform: scale(10, 10);
+  background: radial-gradient(circle, #fff 10%, transparent 10.01%) no-repeat
+    50%;
+  transform: scale(10);
   opacity: 0;
   transition: transform 0.5s, opacity 1s;
 }
 
 .tool-button:active::after {
-  transform: scale(0, 0);
+  transform: scale(0);
   opacity: 0.3;
   transition: 0s;
 }
 
 .tool-button:disabled {
-  background-color: var(--dark-bg-tertiary);
+  background: var(--dark-bg-tertiary);
   color: var(--dark-text-muted);
   border-color: var(--dark-border-light);
   cursor: not-allowed;
@@ -106,7 +100,7 @@
   transform: scale(1.1);
 }
 
-/* Dropdown button styling */
+/* Dropdown */
 .tool-dropdown-button {
   position: relative;
 }
@@ -119,21 +113,20 @@
   opacity: 0.7;
 }
 
-/* Cải thiện tool dropdown */
 .tool-dropdown {
   position: absolute;
   top: calc(100% + 5px);
   left: 0;
   min-width: 240px;
-  background-color: var(--dark-bg-secondary);
+  background: var(--dark-bg-secondary);
+  border: 1px solid var(--dark-border-color);
   border-radius: var(--border-radius);
   box-shadow: var(--shadow-lg);
   z-index: 1000;
   overflow: hidden;
-  border: 1px solid var(--dark-border-color);
+  animation: dropdownFadeIn 0.2s var(--transition-function);
 }
 
-/* Hiệu ứng mượt mà khi hiển thị dropdown */
 @keyframes dropdownFadeIn {
   from {
     opacity: 0;
@@ -145,28 +138,24 @@
   }
 }
 
-.tool-dropdown {
-  animation: dropdownFadeIn 0.2s var(--transition-function);
-}
-
 .tool-dropdown-item {
   display: flex;
   align-items: center;
+  gap: 12px;
   padding: 10px 16px;
   color: var(--dark-text-secondary);
+  border-left: 3px solid transparent;
   cursor: pointer;
   transition: all var(--transition-speed) var(--transition-function);
-  border-left: 3px solid transparent;
-  gap: 12px;
 }
 
 .tool-dropdown-item:hover {
-  background-color: var(--dark-bg-elevated);
+  background: var(--dark-bg-elevated);
   color: var(--dark-text-primary);
 }
 
 .tool-dropdown-item.active {
-  background-color: var(--primary-bg-lighter);
+  background: var(--primary-bg-lighter);
   color: var(--primary-color);
   border-left-color: var(--primary-color);
 }
@@ -177,20 +166,20 @@
   text-align: center;
 }
 
-/* Tooltip customization */
+/* Tooltip */
 .tool-tooltip {
   font-size: 12px;
   line-height: 1.4;
-  background-color: var(--dark-bg-tertiary);
-  color: var(--dark-text-primary);
   padding: 6px 10px;
+  background: var(--dark-bg-tertiary);
+  color: var(--dark-text-primary);
+  border: 1px solid var(--dark-border-color);
   border-radius: var(--border-radius-sm);
   box-shadow: var(--shadow);
   z-index: 1000;
-  border: 1px solid var(--dark-border-color);
 }
 
-/* Navigation controls */
+/* Navigation Controls */
 .navigation-controls {
   display: flex;
   gap: 8px;
@@ -199,24 +188,23 @@
 }
 
 .nav-button {
-  background-color: var(--dark-bg-tertiary);
-  border: 1px solid var(--dark-border-color);
-  color: var(--dark-text-secondary);
+  display: flex;
+  align-items: center;
+  gap: 8px;
   height: 40px;
   padding: 0 16px;
+  background: var(--dark-bg-tertiary);
+  border: 1px solid var(--dark-border-color);
+  color: var(--dark-text-secondary);
   border-radius: var(--border-radius);
-  display: flex;
-  justify-content: center;
-  align-items: center;
+  font-size: 14px;
+  font-weight: 500;
   cursor: pointer;
   transition: all var(--transition-speed) var(--transition-function);
-  font-size: 14px;
-  gap: 8px;
-  font-weight: 500;
 }
 
 .nav-button:hover {
-  background-color: var(--dark-bg-elevated);
+  background: var(--dark-bg-elevated);
   color: var(--dark-text-primary);
   transform: translateY(-2px);
   box-shadow: var(--shadow-sm);
@@ -230,19 +218,58 @@
 }
 
 .image-counter {
-  color: var(--dark-text-primary);
-  background-color: var(--dark-bg-tertiary);
-  border-radius: var(--border-radius);
-  height: 40px;
-  padding: 0 16px;
-  border: 1px solid var(--dark-border-color);
   display: flex;
   align-items: center;
-  font-weight: 500;
+  height: 40px;
+  padding: 0 16px;
+  background: var(--dark-bg-tertiary);
+  border: 1px solid var(--dark-border-color);
+  color: var(--dark-text-primary);
+  border-radius: var(--border-radius);
   font-size: 14px;
+  font-weight: 500;
 }
 
-/* Responsive styles */
+/* Layout Selector */
+.layout-dropdown {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  width: 340px;
+  background: #0b1a32;
+  border: 1px solid #1c3f5f;
+  border-radius: 4px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  z-index: 1000;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.layout-tabs {
+  display: flex;
+  border-bottom: 1px solid #1c3f5f;
+}
+
+.layout-tab {
+  flex: 1;
+  padding: 10px;
+  background: none;
+  border: none;
+  color: #d3d3d3;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.layout-tab.active {
+  background: #0b1a32;
+  color: #fff;
+  border-bottom: 2px solid #59a5ff;
+}
+
+/* Responsive */
 @media (max-width: 768px) {
   .toolbar {
     padding: 6px;
@@ -285,43 +312,4 @@
   .tool-dropdown-item {
     padding: 8px 12px;
   }
-}
-
-/* Layout Selector Styles - Updated to match OHIF */
-.layout-dropdown {
-  position: absolute;
-  top: 100%;
-  left: 0;
-  width: 340px;
-  background-color: #0b1a32;
-  border: 1px solid #1c3f5f;
-  border-radius: 4px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
-  z-index: 1000;
-  overflow: hidden;
-  display: flex;
-  flex-direction: column;
-}
-
-.layout-tabs {
-  display: flex;
-  border-bottom: 1px solid #1c3f5f;
-}
-
-.layout-tab {
-  flex: 1;
-  padding: 10px;
-  background: none;
-  border: none;
-  color: #d3d3d3;
-  cursor: pointer;
-  font-size: 14px;
-  font-weight: 500;
-  transition: all 0.2s ease;
-}
-
-.layout-tab.active {
-  background-color: #0b1a32;
-  color: white;
-  border-bottom: 2px solid #59a5ff;
 }

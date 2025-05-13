@@ -5,8 +5,30 @@ import React, {
   useCallback,
   useMemo,
 } from "react";
-import * as cornerstone from "@cornerstonejs/core";
-import * as cornerstoneTools from "@cornerstonejs/tools";
+import {
+  metaData,
+  imageLoader,
+  StackViewport,
+  getRenderingEngine,
+  RenderingEngine,
+  Enums,
+  cache,
+} from "@cornerstonejs/core";
+import {
+  ToolGroupManager,
+  AngleTool,
+  ArrowAnnotateTool,
+  BidirectionalTool,
+  StackScrollTool,
+  CircleROITool,
+  EllipticalROITool,
+  LengthTool,
+  PanTool,
+  PlanarFreehandROITool,
+  SplineROITool,
+  WindowLevelTool,
+  ZoomTool,
+} from "@cornerstonejs/tools";
 import { useViewportStore } from "../../store/viewportStore";
 import "./Viewport.css";
 
@@ -65,18 +87,17 @@ const Viewport: React.FC<ViewportProps> = React.memo(({ id }) => {
       }
 
       // Tải hình ảnh để lấy metadata nếu chưa có trong cache
-      const metadata = cornerstone.metaData.get("instance", imageId);
+      const metadata = metaData.get("instance", imageId);
 
       if (!metadata) {
         // Nếu metadata chưa có, tải hình ảnh để lấy metadata
-        await cornerstone.imageLoader.loadAndCacheImage(imageId);
+        await imageLoader.loadAndCacheImage(imageId);
         // Thử lấy metadata lại sau khi tải
-        const updatedMetadata = cornerstone.metaData.get("instance", imageId);
+        const updatedMetadata = metaData.get("instance", imageId);
         if (!updatedMetadata) return;
       }
 
-      const finalMetadata =
-        metadata || cornerstone.metaData.get("instance", imageId);
+      const finalMetadata = metadata || metaData.get("instance", imageId);
 
       if (finalMetadata) {
         // Trích xuất thông tin từ metadata
@@ -95,7 +116,7 @@ const Viewport: React.FC<ViewportProps> = React.memo(({ id }) => {
         const patientId = finalMetadata.PatientID || "";
 
         // Lấy thông tin window/level từ hình ảnh
-        const image = await cornerstone.imageLoader.loadAndCacheImage(imageId);
+        const image = await imageLoader.loadAndCacheImage(imageId);
         const windowWidth = image.windowWidth || 0;
         const windowCenter = image.windowCenter || 0;
 
@@ -129,48 +150,45 @@ const Viewport: React.FC<ViewportProps> = React.memo(({ id }) => {
   }, []);
 
   // Hàm để điều chỉnh hình hình hình hình hình hình hình hình hình hình hình ảnh vừa với viewport
-  const fitImageToViewport = useCallback(
-    (stackViewport: cornerstone.StackViewport) => {
-      try {
-        // Lấy kích thước của viewport
-        const canvas = stackViewport.getCanvas();
-        if (!canvas) return;
+  const fitImageToViewport = useCallback((stackViewport: StackViewport) => {
+    try {
+      // Lấy kích thước của viewport
+      const canvas = stackViewport.getCanvas();
+      if (!canvas) return;
 
-        const viewportWidth = canvas.width;
-        const viewportHeight = canvas.height;
+      const viewportWidth = canvas.width;
+      const viewportHeight = canvas.height;
 
-        // Lấy kích thước của hình ảnh
-        const image = stackViewport.getImageData();
-        if (!image) return;
+      // Lấy kích thước của hình ảnh
+      const image = stackViewport.getImageData();
+      if (!image) return;
 
-        const imageWidth = image.dimensions[0];
-        const imageHeight = image.dimensions[1];
+      const imageWidth = image.dimensions[0];
+      const imageHeight = image.dimensions[1];
 
-        // Tính toán tỷ lệ để hình ảnh vừa với viewport
-        const widthRatio = viewportWidth / imageWidth;
-        const heightRatio = viewportHeight / imageHeight;
+      // Tính toán tỷ lệ để hình ảnh vừa với viewport
+      const widthRatio = viewportWidth / imageWidth;
+      const heightRatio = viewportHeight / imageHeight;
 
-        // Chọn tỷ lệ nhỏ hơn để đảm bảo hình ảnh vừa với viewport
-        const scale = Math.min(widthRatio, heightRatio) * 0.9;
+      // Chọn tỷ lệ nhỏ hơn để đảm bảo hình ảnh vừa với viewport
+      const scale = Math.min(widthRatio, heightRatio) * 0.9;
 
-        // Thiết lập camera với tỷ lệ mới
-        const camera = stackViewport.getCamera();
-        if (camera) {
-          // Đặt lại vị trí camera về trung tâm
-          camera.position = [0, 0, 0];
-          camera.parallelScale = 1 / scale;
-          stackViewport.setCamera(camera);
+      // Thiết lập camera với tỷ lệ mới
+      const camera = stackViewport.getCamera();
+      if (camera) {
+        // Đặt lại vị trí camera về trung tâm
+        camera.position = [0, 0, 0];
+        camera.parallelScale = 1 / scale;
+        stackViewport.setCamera(camera);
 
-          // Đặt lại các thông số khác
-          stackViewport.resetCamera();
-          stackViewport.resetProperties();
-        }
-      } catch (err) {
-        console.error("Lỗi khi điều chỉnh hình ảnh vừa với viewport:", err);
+        // Đặt lại các thông số khác
+        stackViewport.resetCamera();
+        stackViewport.resetProperties();
       }
-    },
-    []
-  );
+    } catch (err) {
+      console.error("Lỗi khi điều chỉnh hình ảnh vừa với viewport:", err);
+    }
+  }, []);
 
   // Hàm tải và hiển thị hình ảnh
   const loadAndDisplayImage = useCallback(
@@ -188,11 +206,11 @@ const Viewport: React.FC<ViewportProps> = React.memo(({ id }) => {
           return;
         }
 
-        let renderingEngine = cornerstone.getRenderingEngine(renderingEngineId);
+        let renderingEngine = getRenderingEngine(renderingEngineId);
 
         // Kiểm tra xem rendering engine có tồn tại không hoặc đã bị hủy
         if (!renderingEngine || renderingEngine.hasBeenDestroyed) {
-          renderingEngine = new cornerstone.RenderingEngine(renderingEngineId);
+          renderingEngine = new RenderingEngine(renderingEngineId);
         }
 
         // Lưu trữ tham chiếu đến viewport hiện tại
@@ -200,7 +218,7 @@ const Viewport: React.FC<ViewportProps> = React.memo(({ id }) => {
         try {
           stackViewport = renderingEngine.getViewport(
             viewportId
-          ) as cornerstone.StackViewport;
+          ) as StackViewport;
         } catch (error) {
           console.log("Không thể lấy viewport, tạo mới...");
           stackViewport = null;
@@ -216,12 +234,12 @@ const Viewport: React.FC<ViewportProps> = React.memo(({ id }) => {
             renderingEngine.enableElement({
               viewportId,
               element: viewportRef.current,
-              type: cornerstone.Enums.ViewportType.STACK,
+              type: Enums.ViewportType.STACK,
             });
 
             stackViewport = renderingEngine.getViewport(
               viewportId
-            ) as cornerstone.StackViewport;
+            ) as StackViewport;
 
             if (!stackViewport) {
               throw new Error("Không thể tạo viewport mới");
@@ -242,17 +260,15 @@ const Viewport: React.FC<ViewportProps> = React.memo(({ id }) => {
                 "has been manually called to free up memory"
               )
             ) {
-              renderingEngine = new cornerstone.RenderingEngine(
-                renderingEngineId
-              );
+              renderingEngine = new RenderingEngine(renderingEngineId);
               renderingEngine.enableElement({
                 viewportId,
                 element: viewportRef.current,
-                type: cornerstone.Enums.ViewportType.STACK,
+                type: Enums.ViewportType.STACK,
               });
               stackViewport = renderingEngine.getViewport(
                 viewportId
-              ) as cornerstone.StackViewport;
+              ) as StackViewport;
             } else {
               throw error;
             }
@@ -265,7 +281,7 @@ const Viewport: React.FC<ViewportProps> = React.memo(({ id }) => {
 
         // Tải hình ảnh và trích xuất metadata
         try {
-          await cornerstone.imageLoader.loadAndCacheImage(imageId);
+          await imageLoader.loadAndCacheImage(imageId);
 
           // Trích xuất thông tin DICOM
           await extractDicomInfo(imageId);
@@ -285,21 +301,19 @@ const Viewport: React.FC<ViewportProps> = React.memo(({ id }) => {
                 return;
               }
 
-              renderingEngine = new cornerstone.RenderingEngine(
-                renderingEngineId
-              );
+              renderingEngine = new RenderingEngine(renderingEngineId);
               renderingEngine.enableElement({
                 viewportId,
                 element: viewportRef.current,
-                type: cornerstone.Enums.ViewportType.STACK,
+                type: Enums.ViewportType.STACK,
               });
               stackViewport = renderingEngine.getViewport(
                 viewportId
-              ) as cornerstone.StackViewport;
+              ) as StackViewport;
             } else {
               stackViewport = renderingEngine.getViewport(
                 viewportId
-              ) as cornerstone.StackViewport;
+              ) as StackViewport;
             }
 
             if (!stackViewport) {
@@ -312,12 +326,12 @@ const Viewport: React.FC<ViewportProps> = React.memo(({ id }) => {
               renderingEngine.enableElement({
                 viewportId,
                 element: viewportRef.current,
-                type: cornerstone.Enums.ViewportType.STACK,
+                type: Enums.ViewportType.STACK,
               });
 
               stackViewport = renderingEngine.getViewport(
                 viewportId
-              ) as cornerstone.StackViewport;
+              ) as StackViewport;
             }
 
             // Thiết lập stack và render
@@ -343,21 +357,19 @@ const Viewport: React.FC<ViewportProps> = React.memo(({ id }) => {
                 "has been manually called to free up memory"
               )
             ) {
-              renderingEngine = new cornerstone.RenderingEngine(
-                renderingEngineId
-              );
+              renderingEngine = new RenderingEngine(renderingEngineId);
             }
 
             // Tạo lại viewport
             renderingEngine.enableElement({
               viewportId,
               element: viewportRef.current,
-              type: cornerstone.Enums.ViewportType.STACK,
+              type: Enums.ViewportType.STACK,
             });
 
             const newViewport = renderingEngine.getViewport(
               viewportId
-            ) as cornerstone.StackViewport;
+            ) as StackViewport;
 
             newViewport.setStack([imageId]);
             fitImageToViewport(newViewport);
@@ -380,7 +392,7 @@ const Viewport: React.FC<ViewportProps> = React.memo(({ id }) => {
   const clearCache = useCallback(() => {
     metadataCacheRef.current.clear();
     // Xóa cache của cornerstone
-    cornerstone.cache.purgeCache();
+    cache.purgeCache();
   }, []);
 
   // Khởi tạo viewport khi component được mount
@@ -399,15 +411,15 @@ const Viewport: React.FC<ViewportProps> = React.memo(({ id }) => {
       }
 
       // Kiểm tra xem rendering engine có tồn tại không hoặc đã bị hủy
-      let renderingEngine = cornerstone.getRenderingEngine(renderingEngineId);
+      let renderingEngine = getRenderingEngine(renderingEngineId);
       if (!renderingEngine || renderingEngine.hasBeenDestroyed) {
-        renderingEngine = new cornerstone.RenderingEngine(renderingEngineId);
+        renderingEngine = new RenderingEngine(renderingEngineId);
       }
 
       const viewportInput = {
         viewportId,
         element: viewportRef.current,
-        type: cornerstone.Enums.ViewportType.STACK,
+        type: Enums.ViewportType.STACK,
         background: [0, 0, 0], // Đặt màu nền đen
       };
 
@@ -427,45 +439,43 @@ const Viewport: React.FC<ViewportProps> = React.memo(({ id }) => {
           error.message.includes("has been manually called to free up memory")
         ) {
           console.log("Rendering engine đã bị hủy, tạo mới...");
-          renderingEngine = new cornerstone.RenderingEngine(renderingEngineId);
+          renderingEngine = new RenderingEngine(renderingEngineId);
           renderingEngine.enableElement(viewportInput);
         }
       }
 
       // Kiểm tra xem tool group đã tồn tại chưa
-      let toolGroup =
-        cornerstoneTools.ToolGroupManager.getToolGroup(toolGroupId);
+      let toolGroup = ToolGroupManager.getToolGroup(toolGroupId);
 
       if (!toolGroup) {
-        toolGroup =
-          cornerstoneTools.ToolGroupManager.createToolGroup(toolGroupId);
+        toolGroup = ToolGroupManager.createToolGroup(toolGroupId);
       }
 
       if (toolGroup) {
         // Thêm các công cụ cần thiết
-        toolGroup.addTool(cornerstoneTools.PanTool.toolName);
-        toolGroup.addTool(cornerstoneTools.ZoomTool.toolName);
-        toolGroup.addTool(cornerstoneTools.WindowLevelTool.toolName);
-        toolGroup.addTool(cornerstoneTools.LengthTool.toolName);
-        toolGroup.addTool(cornerstoneTools.AngleTool.toolName);
-        toolGroup.addTool(cornerstoneTools.StackScrollTool.toolName);
-        toolGroup.addTool(cornerstoneTools.BidirectionalTool.toolName);
-        toolGroup.addTool(cornerstoneTools.ArrowAnnotateTool.toolName);
-        toolGroup.addTool(cornerstoneTools.EllipticalROITool.toolName);
-        toolGroup.addTool(cornerstoneTools.CircleROITool.toolName);
-        toolGroup.addTool(cornerstoneTools.PlanarFreehandROITool.toolName);
-        toolGroup.addTool(cornerstoneTools.SplineROITool.toolName);
+        toolGroup.addTool(PanTool.toolName);
+        toolGroup.addTool(ZoomTool.toolName);
+        toolGroup.addTool(WindowLevelTool.toolName);
+        toolGroup.addTool(LengthTool.toolName);
+        toolGroup.addTool(AngleTool.toolName);
+        toolGroup.addTool(StackScrollTool.toolName);
+        toolGroup.addTool(BidirectionalTool.toolName);
+        toolGroup.addTool(ArrowAnnotateTool.toolName);
+        toolGroup.addTool(EllipticalROITool.toolName);
+        toolGroup.addTool(CircleROITool.toolName);
+        toolGroup.addTool(PlanarFreehandROITool.toolName);
+        toolGroup.addTool(SplineROITool.toolName);
 
         // Thiết lập công cụ mặc định
-        toolGroup.setToolActive(cornerstoneTools.WindowLevelTool.toolName, {
+        toolGroup.setToolActive(WindowLevelTool.toolName, {
           bindings: [{ mouseButton: 1 }],
         });
 
-        toolGroup.setToolActive(cornerstoneTools.PanTool.toolName, {
+        toolGroup.setToolActive(PanTool.toolName, {
           bindings: [{ mouseButton: 2 }],
         });
 
-        toolGroup.setToolActive(cornerstoneTools.ZoomTool.toolName, {
+        toolGroup.setToolActive(ZoomTool.toolName, {
           bindings: [{ mouseButton: 3 }],
         });
 
@@ -483,14 +493,14 @@ const Viewport: React.FC<ViewportProps> = React.memo(({ id }) => {
       clearCache();
 
       try {
-        const engine = cornerstone.getRenderingEngine(renderingEngineId);
+        const engine = getRenderingEngine(renderingEngineId);
         if (engine && !engine.hasBeenDestroyed) {
           engine.disableElement(viewportId);
           engine.destroy();
         }
 
-        if (cornerstoneTools.ToolGroupManager.getToolGroup(toolGroupId)) {
-          cornerstoneTools.ToolGroupManager.destroyToolGroup(toolGroupId);
+        if (ToolGroupManager.getToolGroup(toolGroupId)) {
+          ToolGroupManager.destroyToolGroup(toolGroupId);
         }
       } catch (error) {
         console.error("Lỗi khi dọn dẹp rendering engine:", error);
@@ -527,7 +537,7 @@ const Viewport: React.FC<ViewportProps> = React.memo(({ id }) => {
         return;
       }
 
-      cornerstone.cache.purgeCache();
+      cache.purgeCache();
       loadAndDisplayImage(imageId);
     }, 50);
 
@@ -545,13 +555,12 @@ const Viewport: React.FC<ViewportProps> = React.memo(({ id }) => {
       debounce(() => {
         if (!viewport || !viewport.imageIds.length || isLoading) return;
 
-        const renderingEngine =
-          cornerstone.getRenderingEngine(renderingEngineId);
+        const renderingEngine = getRenderingEngine(renderingEngineId);
         if (!renderingEngine) return;
 
         const stackViewport = renderingEngine.getViewport(
           viewportId
-        ) as cornerstone.StackViewport;
+        ) as StackViewport;
         if (!stackViewport) return;
 
         // Cập nhật kích thước canvas, giữ camera
