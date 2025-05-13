@@ -5,7 +5,6 @@ interface ToolState {
   activeTool: string | null;
   tools: Tool[];
 
-  // Actions
   setActiveTool: (toolName: string) => void;
   addTool: (tool: Tool) => void;
   removeTool: (toolName: string) => void;
@@ -21,7 +20,6 @@ export const useToolStore = create<ToolState>((set, get) => ({
     { name: "Length", mode: "passive" },
     { name: "Probe", mode: "passive" },
     { name: "StackScroll", mode: "passive" },
-    // Thêm các công cụ mới
     { name: "RectangleROI", mode: "passive" },
     { name: "Bidirectional", mode: "passive" },
     { name: "Annotation", mode: "passive" },

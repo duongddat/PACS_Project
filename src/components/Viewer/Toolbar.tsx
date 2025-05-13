@@ -20,7 +20,7 @@ import "./Toolbar.css";
 
 interface ToolbarProps {
   viewportId: string;
-  children?: React.ReactNode; // Thêm prop children
+  children?: React.ReactNode;
 }
 
 const Toolbar: React.FC<ToolbarProps> = ({ viewportId, children }) => {
@@ -35,7 +35,6 @@ const Toolbar: React.FC<ToolbarProps> = ({ viewportId, children }) => {
   const renderingEngineId = `engine-${viewportId}`;
   const toolGroupId = `toolgroup-${viewportId}`;
 
-  // Đảm bảo các công cụ được đăng ký khi component được mount
   useEffect(() => {
     if (!ToolGroupManager.getToolGroup(toolGroupId)) return;
 
@@ -51,7 +50,6 @@ const Toolbar: React.FC<ToolbarProps> = ({ viewportId, children }) => {
         return;
       }
 
-      // Chỉ deactivate công cụ hiện tại nếu khác với công cụ mới
       if (activeTool !== toolName) {
         try {
           toolGroup.setToolPassive(activeTool);
@@ -64,13 +62,10 @@ const Toolbar: React.FC<ToolbarProps> = ({ viewportId, children }) => {
       }
 
       try {
-        // Kiểm tra xem công cụ đã được thêm vào toolGroup chưa
         if (!toolGroup.getToolInstance(toolName)) {
-          // Thêm công cụ vào toolGroup nếu chưa có
           toolGroup.addTool(toolName);
         }
 
-        // Cấu hình đặc biệt cho AnnotationTool
         if (toolName === ArrowAnnotateTool.toolName) {
           toolGroup.setToolConfiguration(toolName, {
             getTextCallback: (callback: any, eventDetail: any) => {
@@ -94,21 +89,18 @@ const Toolbar: React.FC<ToolbarProps> = ({ viewportId, children }) => {
     }
   };
 
-  // Xử lý chuyển đến hình ảnh tiếp theo
   const handleNextImage = () => {
     if (viewportId) {
       nextImage(viewportId);
     }
   };
 
-  // Xử lý chuyển đến hình ảnh trước đó
   const handlePreviousImage = () => {
     if (viewportId) {
       previousImage(viewportId);
     }
   };
 
-  // Xử lý reset viewport
   const handleReset = () => {
     const renderingEngine = getRenderingEngine(renderingEngineId);
     if (!renderingEngine) return;
@@ -122,7 +114,6 @@ const Toolbar: React.FC<ToolbarProps> = ({ viewportId, children }) => {
     stackViewport.render();
   };
 
-  // Đóng dropdown khi click ra ngoài
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
       if (
@@ -139,7 +130,6 @@ const Toolbar: React.FC<ToolbarProps> = ({ viewportId, children }) => {
     };
   }, []);
 
-  // Công cụ chính
   const mainTools = [
     {
       name: WindowLevelTool.toolName,
@@ -158,7 +148,6 @@ const Toolbar: React.FC<ToolbarProps> = ({ viewportId, children }) => {
     },
   ];
 
-  // Công cụ đo lường
   const measurementTools = [
     {
       name: LengthTool.toolName,
@@ -212,7 +201,6 @@ const Toolbar: React.FC<ToolbarProps> = ({ viewportId, children }) => {
 
   return (
     <div className="toolbar">
-      {/* Nhóm công cụ cơ bản */}
       <div className="tool-group">
         {mainTools.map((tool) => (
           <button
@@ -263,8 +251,6 @@ const Toolbar: React.FC<ToolbarProps> = ({ viewportId, children }) => {
           </div>
         )}
       </div>
-
-      {/* Các nút điều hướng */}
       <div className="tool-group">
         <button
           className="tool-button"
@@ -290,8 +276,6 @@ const Toolbar: React.FC<ToolbarProps> = ({ viewportId, children }) => {
           <i className="fas fa-chevron-right"></i>
         </button>
       </div>
-
-      {/* Nút đặt lại */}
       <div className="tool-group">
         <button
           className="tool-button"
@@ -303,10 +287,7 @@ const Toolbar: React.FC<ToolbarProps> = ({ viewportId, children }) => {
           <i className="fas fa-undo"></i>
         </button>
       </div>
-
-      {/* Thêm LayoutSelector vào toolbar */}
       <div className="tool-group">{children}</div>
-
       <Tooltip id="toolbar-tooltip" place="bottom" className="tool-tooltip" />
     </div>
   );

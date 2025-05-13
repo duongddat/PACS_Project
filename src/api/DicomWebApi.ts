@@ -7,9 +7,7 @@ import {
 
 const API_URL = process.env.REACT_APP_API_URL;
 
-// Thêm các phương thức mới vào DicomWebApi
 export const DicomWebApi = {
-  // Lấy danh sách nghiên cứu
   getStudies: async (params = {}) => {
     const queryParams = new URLSearchParams(params);
     const response = await fetch(`${API_URL}/studies?${queryParams}`, {
@@ -19,11 +17,9 @@ export const DicomWebApi = {
     });
     const data = await response.json();
 
-    // Sử dụng dicomUtils để xử lý dữ liệu
     return data.map((study: any) => parseDicomStudy(study));
   },
 
-  // Lấy series trong một nghiên cứu
   getSeriesOfStudy: async (studyInstanceUID: string) => {
     const response = await fetch(
       `${API_URL}/studies/${studyInstanceUID}/series`,
@@ -35,7 +31,6 @@ export const DicomWebApi = {
     );
     const data = await response.json();
 
-    // Chuyển đổi dữ liệu từ DICOMweb JSON sang định dạng dễ sử dụng hơn
     return data.map((series: any) => {
       return {
         SeriesInstanceUID: parseDicomTag(series, "0020000E"),
@@ -66,7 +61,6 @@ export const DicomWebApi = {
     );
     const data = await response.json();
 
-    // Chuyển đổi dữ liệu từ DICOMweb JSON sang định dạng dễ sử dụng hơn
     return data.map((instance: any) => {
       return {
         SOPInstanceUID: parseDicomTag(instance, "00080018"),
@@ -80,7 +74,6 @@ export const DicomWebApi = {
     });
   },
 
-  // Lấy metadata của một instance
   getInstanceMetadata: async (
     studyInstanceUID: string,
     seriesInstanceUID: string,
@@ -97,7 +90,6 @@ export const DicomWebApi = {
     return response.json();
   },
 
-  // Tạo URL hình ảnh WADO
   getWadoImageUrl: (
     studyInstanceUID: string,
     seriesInstanceUID: string,
@@ -106,7 +98,6 @@ export const DicomWebApi = {
     return `wadouri:${API_URL}/studies/${studyInstanceUID}/series/${seriesInstanceUID}/instances/${sopInstanceUID}`;
   },
 
-  // Tạo danh sách URL hình ảnh cho một series
   getSeriesImageIds: async (
     studyInstanceUID: string,
     seriesInstanceUID: string
@@ -116,14 +107,12 @@ export const DicomWebApi = {
       seriesInstanceUID
     );
 
-    // Sắp xếp instances theo InstanceNumber
     instances.sort((a: any, b: any) => {
       const aNum = parseInt(a.InstanceNumber || "0", 10);
       const bNum = parseInt(b.InstanceNumber || "0", 10);
       return aNum - bNum;
     });
 
-    // Tạo danh sách imageIds
     return instances.map((instance: Instance) =>
       DicomWebApi.getWadoImageUrl(
         studyInstanceUID,
@@ -133,7 +122,6 @@ export const DicomWebApi = {
     );
   },
 
-  // Tải hình ảnh dưới dạng blob
   getImageAsBlob: async (
     studyInstanceUID: string,
     seriesInstanceUID: string,
@@ -150,7 +138,6 @@ export const DicomWebApi = {
     return response.blob();
   },
 
-  // Tải frame cụ thể từ một instance
   getFrame: async (
     studyInstanceUID: string,
     seriesInstanceUID: string,
@@ -168,7 +155,6 @@ export const DicomWebApi = {
     return response.arrayBuffer();
   },
 
-  // Tìm kiếm nghiên cứu với các tham số nâng cao
   searchStudies: async (params: Record<string, string>) => {
     const queryParams = new URLSearchParams(params);
     const response = await fetch(`${API_URL}/studies?${queryParams}`, {
@@ -180,7 +166,6 @@ export const DicomWebApi = {
     return data.map((study: any) => parseDicomStudy(study));
   },
 
-  // Tải thumbnail của một instance
   getThumbnail: async (
     studyInstanceUID: string,
     seriesInstanceUID: string,
@@ -199,7 +184,6 @@ export const DicomWebApi = {
     return response.blob();
   },
 
-  // Lấy tất cả instances của một study
   getAllInstancesOfStudy: async (studyInstanceUID: string) => {
     const series = await DicomWebApi.getSeriesOfStudy(studyInstanceUID);
     const allInstances = [];
@@ -215,7 +199,6 @@ export const DicomWebApi = {
     return allInstances;
   },
 
-  // Lấy dữ liệu volume cho 3D rendering
   getVolumeData: async (
     studyInstanceUID: string,
     seriesInstanceUID: string
@@ -225,14 +208,12 @@ export const DicomWebApi = {
       seriesInstanceUID
     );
 
-    // Sắp xếp instances theo vị trí không gian
     instances.sort((a: any, b: any) => {
       const aNum = parseInt(a.InstanceNumber || "0", 10);
       const bNum = parseInt(b.InstanceNumber || "0", 10);
       return aNum - bNum;
     });
 
-    // Tạo danh sách imageIds cho volume
     const imageIds = instances.map((instance: Instance) =>
       DicomWebApi.getWadoImageUrl(
         studyInstanceUID,
@@ -251,13 +232,11 @@ export const DicomWebApi = {
     };
   },
 
-  // Lấy danh sách imageIds cho multiframe
   getMultiframeImageIds: async (
     studyInstanceUID: string,
     seriesInstanceUID: string,
     sopInstanceUID: string
   ) => {
-    // Lấy metadata để xác định số lượng frame
     const metadata = await DicomWebApi.getInstanceMetadata(
       studyInstanceUID,
       seriesInstanceUID,
@@ -270,7 +249,6 @@ export const DicomWebApi = {
     );
     const imageIds = [];
 
-    // Tạo imageId cho từng frame
     for (let frameIndex = 1; frameIndex <= numberOfFrames; frameIndex++) {
       imageIds.push(
         `wadouri:${API_URL}/studies/${studyInstanceUID}/series/${seriesInstanceUID}/instances/${sopInstanceUID}/frames/${frameIndex}`
@@ -280,7 +258,6 @@ export const DicomWebApi = {
     return imageIds;
   },
 
-  // Kiểm tra xem một series có phải là multiframe không
   isMultiframe: async (studyInstanceUID: string, seriesInstanceUID: string) => {
     const instances = await DicomWebApi.getInstancesOfSeries(
       studyInstanceUID,
@@ -289,14 +266,12 @@ export const DicomWebApi = {
 
     if (instances.length === 0) return false;
 
-    // Lấy metadata của instance đầu tiên
     const metadata = await DicomWebApi.getInstanceMetadata(
       studyInstanceUID,
       seriesInstanceUID,
       instances[0].SOPInstanceUID
     );
 
-    // Kiểm tra tag NumberOfFrames
     const numberOfFrames = parseInt(
       parseDicomTag(metadata[0], "00280008") || "0",
       10

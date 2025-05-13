@@ -24,13 +24,11 @@ const StudyList: React.FC<StudyListProps> = () => {
     accessionNumber: "",
   });
 
-  // Tải danh sách nghiên cứu
   const loadStudies = async () => {
     try {
       setLoading(true);
       setError(null);
 
-      // Tạo tham số tìm kiếm
       const params: Record<string, string> = {};
       if (searchParams.patientName)
         params["PatientName"] = searchParams.patientName;
@@ -51,12 +49,10 @@ const StudyList: React.FC<StudyListProps> = () => {
     }
   };
 
-  // Tải danh sách nghiên cứu khi component được mount
   useEffect(() => {
     loadStudies();
   }, []);
 
-  // Xử lý thay đổi tham số tìm kiếm
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     setSearchParams((prev) => ({
@@ -65,13 +61,11 @@ const StudyList: React.FC<StudyListProps> = () => {
     }));
   };
 
-  // Xử lý tìm kiếm
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
     loadStudies();
   };
 
-  // Xử lý xóa tìm kiếm
   const handleClearSearch = () => {
     setSearchParams({
       patientName: "",
@@ -80,16 +74,13 @@ const StudyList: React.FC<StudyListProps> = () => {
       modality: "",
       accessionNumber: "",
     });
-    // Tải lại danh sách nghiên cứu không có tham số tìm kiếm
     loadStudies();
   };
 
-  // Xóa giá trị tìm kiếm
   const clearSearchInput = () => {
     setSearchParams((prev) => ({ ...prev, patientName: "" }));
   };
 
-  // Format ngày từ YYYYMMDD sang DD/MM/YYYY
   const formatDate = (dateString: string) => {
     if (!dateString || dateString.length !== 8) return dateString;
     return `${dateString.slice(6, 8)}/${dateString.slice(
@@ -103,12 +94,10 @@ const StudyList: React.FC<StudyListProps> = () => {
     setIsAdvancedSearchOpen(!isAdvancedSearchOpen);
   };
 
-  // Xử lý focus vào input
   const handleInputFocus = () => {
     setIsTyping(true);
   };
 
-  // Xử lý blur khỏi input
   const handleInputBlur = () => {
     setIsTyping(false);
   };
@@ -125,8 +114,6 @@ const StudyList: React.FC<StudyListProps> = () => {
           )}
         </p>
       </div>
-
-      {/* Thanh tìm kiếm cải tiến */}
       <div
         ref={searchBarRef}
         className={`${styles["search-bar"]} ${
@@ -171,8 +158,6 @@ const StudyList: React.FC<StudyListProps> = () => {
           </button>
         </form>
       </div>
-
-      {/* Form tìm kiếm nâng cao có thể mở/đóng */}
       <div
         className={`${styles["advanced-search-panel"]} ${
           isAdvancedSearchOpen ? styles["open"] : ""
@@ -194,7 +179,6 @@ const StudyList: React.FC<StudyListProps> = () => {
                 placeholder="Nhập ID bệnh nhân"
               />
             </div>
-
             <div className={styles["search-field"]}>
               <label htmlFor="studyDate">Ngày nghiên cứu</label>
               <input
@@ -205,7 +189,6 @@ const StudyList: React.FC<StudyListProps> = () => {
                 onChange={handleSearchChange}
               />
             </div>
-
             <div className={styles["search-field"]}>
               <label htmlFor="modality">Phương thức</label>
               <input
@@ -217,7 +200,6 @@ const StudyList: React.FC<StudyListProps> = () => {
                 placeholder="CT, MR, XR, ..."
               />
             </div>
-
             <div className={styles["search-field"]}>
               <label htmlFor="accessionNumber">Số tiếp nhận</label>
               <input
@@ -230,7 +212,6 @@ const StudyList: React.FC<StudyListProps> = () => {
               />
             </div>
           </div>
-
           <div className={styles["advanced-search-buttons"]}>
             <button type="submit" className={styles["search-button"]}>
               <i className="fas fa-search"></i> Áp dụng bộ lọc
@@ -245,29 +226,21 @@ const StudyList: React.FC<StudyListProps> = () => {
           </div>
         </form>
       </div>
-
-      {/* Hiển thị lỗi nếu có */}
       {error && (
         <div className={`${styles["message"]} ${styles["error-message"]}`}>
           <i className="fas fa-exclamation-circle"></i> {error}
         </div>
       )}
-
-      {/* Hiển thị trạng thái đang tải */}
       {loading && (
         <div className={`${styles["message"]} ${styles["loading-message"]}`}>
           <div className="spinner"></div> Đang tải danh sách nghiên cứu...
         </div>
       )}
-
-      {/* Không có kết quả */}
       {!loading && studies.length === 0 && (
         <div className={`${styles["message"]} ${styles["info-message"]}`}>
           <i className="fas fa-info-circle"></i> Không tìm thấy nghiên cứu nào.
         </div>
       )}
-
-      {/* Bảng danh sách nghiên cứu */}
       {!loading && studies.length > 0 && (
         <div className={styles["table-responsive"]}>
           <table className={styles["studies-table"]}>

@@ -75,7 +75,6 @@ interface ViewportGridProps {
   layoutChangeTimestamp: number;
 }
 
-// Tạo component con để hiển thị viewports
 const ViewportGrid = React.memo(
   ({
     rows,
@@ -97,7 +96,6 @@ const ViewportGrid = React.memo(
         }}
       >
         {viewportConfig.map((vpConfig) => {
-          // Bỏ qua viewport bị ẩn
           if (
             vpConfig.span &&
             (vpConfig.span[0] === 0 || vpConfig.span[1] === 0)
@@ -133,7 +131,6 @@ const ViewportGrid = React.memo(
   }
 );
 
-// Bọc component Viewer trong React.memo để tránh render lại không cần thiết
 const Viewer = React.memo(() => {
   const { studyInstanceUID } = useParams<{ studyInstanceUID: string }>();
   const [activeViewport, setActiveViewport] = useState("viewport-1");
@@ -166,7 +163,6 @@ const Viewer = React.memo(() => {
     viewports,
   } = useViewportStore();
 
-  // Lấy cấu hình layout từ useLayoutStore
   const {
     currentLayout,
     getViewportConfiguration,
@@ -175,7 +171,6 @@ const Viewer = React.memo(() => {
     layoutChangeTimestamp,
   } = useLayoutStore();
 
-  // Sử dụng useMemo để tránh tính toán lại cấu hình viewport khi không cần thiết
   const {
     rows,
     cols,
@@ -185,7 +180,6 @@ const Viewer = React.memo(() => {
     [getViewportConfiguration, currentLayout]
   );
 
-  // Khởi tạo Cornerstone khi component được mount
   useEffect(() => {
     let isMounted = true;
 
@@ -195,10 +189,8 @@ const Viewer = React.memo(() => {
         setCornerstoneInitialized(true);
       }
     };
-
     initialize();
 
-    // Cleanup khi component unmount
     return () => {
       isMounted = false;
       const cleanupCornerstone = async () => {
@@ -209,33 +201,24 @@ const Viewer = React.memo(() => {
     };
   }, []);
 
-  // Tải thông tin study và series khi component được mount
   useEffect(() => {
     if (studyInstanceUID) {
-      // Lấy thông tin study trước
       fetchStudyByUID(studyInstanceUID);
-      // Sau đó lấy danh sách series
       fetchSeriesForStudy(studyInstanceUID);
     }
   }, [studyInstanceUID, fetchStudyByUID, fetchSeriesForStudy]);
 
-  // Khởi tạo viewport dựa trên cấu hình layout
   useEffect(() => {
-    // Chỉ tạo viewport khi Cornerstone đã được khởi tạo
     if (cornerstoneInitialized) {
       try {
-        // Kiểm tra nếu layout đã thay đổi
         if (prevLayoutRef.current !== currentLayout) {
           prevLayoutRef.current = currentLayout;
 
-          // Xóa các viewport hiện tại trước khi tạo mới
           Object.keys(viewports).forEach((id) => {
             removeViewport(id);
           });
 
-          // Tạo các viewport mới dựa trên cấu hình
           viewportConfig.forEach((vpConfig) => {
-            // Bỏ qua viewport bị ẩn
             if (
               vpConfig.span &&
               (vpConfig.span[0] === 0 || vpConfig.span[1] === 0)
@@ -245,9 +228,7 @@ const Viewer = React.memo(() => {
             addViewport(vpConfig.id, "cornerstone-engine");
           });
 
-          // Đặt viewport đầu tiên làm active nếu có viewport
           if (viewportConfig.length > 0) {
-            // Lọc ra các viewport không bị ẩn
             const visibleViewports = viewportConfig.filter(
               (vpConfig) =>
                 !(
@@ -263,7 +244,6 @@ const Viewer = React.memo(() => {
             }
           }
 
-          // Buộc tải lại viewport sau khi thay đổi layout
           setTimeout(() => {
             forceRefreshViewports();
           }, 100);
@@ -283,7 +263,6 @@ const Viewer = React.memo(() => {
     forceRefreshViewports,
   ]);
 
-  // Tải hình ảnh khi series được chọn hoặc khi layout thay đổi
   useEffect(() => {
     if (
       studyInstanceUID &&
@@ -292,11 +271,8 @@ const Viewer = React.memo(() => {
       cornerstoneInitialized
     ) {
       const currentSeriesUID = currentSeries.SeriesInstanceUID;
-
-      // Chỉ tải lại nếu series thay đổi hoặc layout thay đổi
       if (prevSeriesRef.current !== currentSeriesUID || layoutChangeTimestamp) {
         prevSeriesRef.current = currentSeriesUID;
-
         loadImagesForViewport(
           activeViewport,
           studyInstanceUID,
@@ -313,21 +289,17 @@ const Viewer = React.memo(() => {
     layoutChangeTimestamp,
   ]);
 
-  // Hàm để lấy thumbnail cho mỗi series - tối ưu hóa với useCallback
   const loadSeriesThumbnails = useCallback(async () => {
     if (!studyInstanceUID || !series.length) return;
 
-    // Đặt state loading cho tất cả thumbnails
     const initialThumbnailsMap: Record<string, string> = {};
     series.forEach((seriesItem) => {
-      // Nếu đã có thumbnail, giữ nguyên
       if (seriesThumbnails[seriesItem.SeriesInstanceUID]) {
         initialThumbnailsMap[seriesItem.SeriesInstanceUID] =
           seriesThumbnails[seriesItem.SeriesInstanceUID];
       }
     });
 
-    // Cập nhật state với các thumbnail đã có
     if (
       Object.keys(initialThumbnailsMap).length > 0 &&
       Object.keys(initialThumbnailsMap).length !==
@@ -336,45 +308,36 @@ const Viewer = React.memo(() => {
       setSeriesThumbnails(initialThumbnailsMap);
     }
 
-    // Tải các thumbnail còn thiếu
     const thumbnailPromises = series.map(async (seriesItem) => {
-      // Bỏ qua nếu đã có thumbnail
       if (initialThumbnailsMap[seriesItem.SeriesInstanceUID]) {
         return;
       }
 
       try {
-        // Lấy instance đầu tiên của series
         const instances = await DicomWebApi.getInstancesOfSeries(
           studyInstanceUID,
           seriesItem.SeriesInstanceUID
         );
 
         if (instances.length > 0) {
-          // Sắp xếp instances theo InstanceNumber
           instances.sort((a: any, b: any) => {
             const aNum = parseInt(a.InstanceNumber || "0", 10);
             const bNum = parseInt(b.InstanceNumber || "0", 10);
             return aNum - bNum;
           });
 
-          // Lấy instance ở giữa để có hình ảnh đại diện tốt hơn
           const middleIndex = Math.floor(instances.length / 2);
           const representativeInstance = instances[middleIndex];
 
-          // Lấy thumbnail
           const thumbnailBlob = await DicomWebApi.getThumbnail(
             studyInstanceUID,
             seriesItem.SeriesInstanceUID,
             representativeInstance.SOPInstanceUID,
-            75, // quality
-            "128,128" // viewport size
+            75,
+            "128,128"
           );
 
-          // Chuyển đổi blob thành URL
           const thumbnailUrl = URL.createObjectURL(thumbnailBlob);
-
-          // Cập nhật state cho từng thumbnail khi tải xong
           setSeriesThumbnails((prev) => ({
             ...prev,
             [seriesItem.SeriesInstanceUID]: thumbnailUrl,
@@ -388,17 +351,14 @@ const Viewer = React.memo(() => {
       }
     });
 
-    // Đợi tất cả thumbnail tải xong
     await Promise.all(thumbnailPromises);
   }, [studyInstanceUID, series, seriesThumbnails]);
 
-  // Tải thumbnail khi series thay đổi
   useEffect(() => {
     if (series.length > 0 && studyInstanceUID) {
       loadSeriesThumbnails();
     }
 
-    // Cleanup URLs khi component unmount
     return () => {
       Object.values(seriesThumbnails).forEach((url) => {
         URL.revokeObjectURL(url);
@@ -406,18 +366,13 @@ const Viewer = React.memo(() => {
     };
   }, [series, studyInstanceUID, loadSeriesThumbnails]);
 
-  // Hàm xử lý khi chọn series
   const handleSeriesSelect = useCallback(
     async (seriesItem: Series) => {
       try {
         if (!studyInstanceUID) return;
 
-        // Chỉ cập nhật viewport đang active
         if (activeViewport) {
-          // Lưu trạng thái series hiện tại
           setCurrentSeries(seriesItem);
-
-          // Chỉ load series mới cho viewport đang active
           await loadImagesForViewport(
             activeViewport,
             studyInstanceUID,
@@ -431,26 +386,20 @@ const Viewer = React.memo(() => {
     [activeViewport, loadImagesForViewport, setCurrentSeries, studyInstanceUID]
   );
 
-  // Hàm xử lý đóng/mở sidebar
   const toggleSidebar = useCallback(() => {
     setIsSidebarCollapsed((prev) => !prev);
   }, []);
 
-  // Hàm xử lý khi thay đổi layout
   const handleLayoutChange = useCallback(
     (layoutId: string) => {
       setLayout(layoutId);
-
-      // Đợi một chút để layout được cập nhật
       setTimeout(() => {
-        // Buộc tải lại tất cả viewport
         forceRefreshViewports();
       }, 100);
     },
     [setLayout, forceRefreshViewports]
   );
 
-  // Hàm xử lý khi click vào viewport
   const handleViewportClick = useCallback(
     (viewportId: string) => {
       setActiveViewport(viewportId);
@@ -459,9 +408,7 @@ const Viewer = React.memo(() => {
     [setActiveViewportInStore]
   );
 
-  // Thêm useEffect để xử lý resize và tự động thu sidebar trên mobile
   useEffect(() => {
-    // Kiểm tra nếu là thiết bị di động
     const checkMobile = () => {
       const newIsMobile = window.innerWidth <= 768;
 
@@ -473,18 +420,14 @@ const Viewer = React.memo(() => {
       }
     };
 
-    // Kiểm tra khi component mount
     checkMobile();
-
-    // Kiểm tra khi resize cửa sổ
     window.addEventListener("resize", checkMobile);
 
     return () => {
       window.removeEventListener("resize", checkMobile);
     };
-  }, []); // Bỏ isMobile khỏi dependency array để tránh vòng lặp
+  }, []);
 
-  // Thêm chức năng resize sidebar
   useEffect(() => {
     const resizeHandle = resizeHandleRef.current;
     const leftPanel = leftPanelRef.current;
@@ -506,10 +449,7 @@ const Viewer = React.memo(() => {
 
     const onMouseMove = (e: MouseEvent) => {
       if (!isResizing) return;
-
       const newWidth = startWidth + (e.clientX - startX);
-
-      // Giới hạn kích thước tối thiểu và tối đa
       const minWidth = 200;
       const maxWidth = 600;
       const clampedWidth = Math.max(minWidth, Math.min(maxWidth, newWidth));
@@ -537,7 +477,6 @@ const Viewer = React.memo(() => {
     };
   }, [isSidebarCollapsed]);
 
-  // Tạo hàm memoized để render series thumbnails
   const renderSeriesThumbnails = useMemo(() => {
     return series.map((seriesItem) => (
       <SeriesThumbnail
@@ -552,7 +491,6 @@ const Viewer = React.memo(() => {
     ));
   }, [series, currentSeries, seriesThumbnails, handleSeriesSelect]);
 
-  // Cập nhật phần render series thumbnails
   return (
     <div className="viewer-container">
       <div className="viewer-header">
@@ -596,7 +534,6 @@ const Viewer = React.memo(() => {
             isSidebarCollapsed && isMobile ? "main-collapsed" : ""
           }`}
         >
-          {/* Thêm nút hiển thị sidebar khi đã ẩn */}
           {isSidebarCollapsed && (
             <button
               className="sidebar-show-button"

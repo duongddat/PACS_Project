@@ -18,10 +18,10 @@ export type LayoutType =
 interface LayoutState {
   currentLayout: LayoutType;
   viewportCount: number;
-  layoutChangeTimestamp: number; // Thêm trường này
+  layoutChangeTimestamp: number;
   setLayout: (layout: LayoutType) => void;
   resetViewportCache: () => void;
-  forceRefreshViewports: () => void; // Thêm hàm này
+  forceRefreshViewports: () => void;
   getViewportConfiguration: () => {
     rows: number;
     cols: number;
@@ -36,12 +36,10 @@ interface LayoutState {
 export const useLayoutStore = create<LayoutState>((set, get) => ({
   currentLayout: "1x1",
   viewportCount: 1,
-  layoutChangeTimestamp: Date.now(), // Khởi tạo với thời gian hiện tại
+  layoutChangeTimestamp: Date.now(),
 
   setLayout: (layout: LayoutType) => {
     let viewportCount = 1;
-
-    // Xác định số lượng viewport dựa trên loại bố cục
     if (layout === "1x1") {
       viewportCount = 1;
     } else if (layout === "1x2") {
@@ -49,9 +47,8 @@ export const useLayoutStore = create<LayoutState>((set, get) => ({
     } else if (layout === "2x2") {
       viewportCount = 4;
     } else if (layout === "2x2-alt") {
-      viewportCount = 3; // Sửa lại: 2x2-alt chỉ có 3 viewport
+      viewportCount = 3;
     } else if (layout.startsWith("custom-")) {
-      // Xử lý bố cục tùy chỉnh, ví dụ: custom-2x3
       const [rows, cols] = layout.replace("custom-", "").split("x").map(Number);
       viewportCount = rows * cols;
     } else if (layout === "mpr") {
@@ -65,14 +62,10 @@ export const useLayoutStore = create<LayoutState>((set, get) => ({
     } else if (layout === "3d-only" || layout === "frame-view") {
       viewportCount = 1;
     } else {
-      // Mặc định cho các layout không xác định
       viewportCount = 1;
     }
 
-    // Xóa cache trước khi đặt layout mới
     get().resetViewportCache();
-
-    // Cập nhật timestamp khi layout thay đổi
     set({
       currentLayout: layout,
       viewportCount,
@@ -80,12 +73,9 @@ export const useLayoutStore = create<LayoutState>((set, get) => ({
     });
   },
 
-  // Thêm hàm mới để buộc tải lại viewport mà không thay đổi layout
   forceRefreshViewports: () => {
-    // Xóa cache
     get().resetViewportCache();
 
-    // Chỉ cập nhật timestamp để kích hoạt tải lại
     set({ layoutChangeTimestamp: Date.now() });
   },
 
@@ -114,7 +104,6 @@ export const useLayoutStore = create<LayoutState>((set, get) => ({
   getViewportConfiguration: () => {
     const { currentLayout } = get();
 
-    // Cấu hình mặc định cho bố cục 1x1
     let rows = 1;
     let cols = 1;
     let viewports: {
@@ -123,9 +112,7 @@ export const useLayoutStore = create<LayoutState>((set, get) => ({
       span?: [number, number];
     }[] = [{ id: "viewport-1", position: [0, 0] }];
 
-    // Xác định cấu hình dựa trên loại bố cục
     if (currentLayout === "1x1") {
-      // Đã thiết lập mặc định ở trên
     } else if (currentLayout === "1x2") {
       rows = 1;
       cols = 2;
@@ -143,7 +130,6 @@ export const useLayoutStore = create<LayoutState>((set, get) => ({
         { id: "viewport-4", position: [1, 1] },
       ];
     } else if (currentLayout === "2x2-alt") {
-      // Bố cục 2x2 với viewport đầu tiên lớn hơn
       rows = 2;
       cols = 2;
       viewports = [
@@ -155,63 +141,57 @@ export const useLayoutStore = create<LayoutState>((set, get) => ({
       rows = 2;
       cols = 2;
       viewports = [
-        { id: "viewport-1", position: [0, 0] }, // Axial
-        { id: "viewport-2", position: [0, 1] }, // Sagittal
-        { id: "viewport-3", position: [1, 0] }, // Coronal
-        { id: "viewport-4", position: [1, 1], span: [0, 0] }, // Ẩn viewport thứ 4
+        { id: "viewport-1", position: [0, 0] },
+        { id: "viewport-2", position: [0, 1] },
+        { id: "viewport-3", position: [1, 0] },
+        { id: "viewport-4", position: [1, 1], span: [0, 0] },
       ];
     } else if (currentLayout === "3d-four-up") {
       rows = 2;
       cols = 2;
       viewports = [
-        { id: "viewport-1", position: [0, 0] }, // Axial
-        { id: "viewport-2", position: [0, 1] }, // Sagittal
-        { id: "viewport-3", position: [1, 0] }, // Coronal
-        { id: "viewport-4", position: [1, 1] }, // 3D
+        { id: "viewport-1", position: [0, 0] },
+        { id: "viewport-2", position: [0, 1] },
+        { id: "viewport-3", position: [1, 0] },
+        { id: "viewport-4", position: [1, 1] },
       ];
     } else if (currentLayout === "3d-main") {
       rows = 2;
       cols = 2;
       viewports = [
-        { id: "viewport-1", position: [0, 0], span: [2, 1] }, // 3D lớn
-        { id: "viewport-2", position: [0, 1] }, // Axial
-        { id: "viewport-3", position: [1, 1] }, // Sagittal
+        { id: "viewport-1", position: [0, 0], span: [2, 1] },
+        { id: "viewport-2", position: [0, 1] },
+        { id: "viewport-3", position: [1, 1] },
       ];
     } else if (currentLayout === "axial-primary") {
       rows = 2;
       cols = 2;
       viewports = [
-        { id: "viewport-1", position: [0, 0], span: [2, 1] }, // Axial lớn
-        { id: "viewport-2", position: [0, 1], span: [2, 1] }, // Thông tin
+        { id: "viewport-1", position: [0, 0], span: [2, 1] },
+        { id: "viewport-2", position: [0, 1], span: [2, 1] },
       ];
     } else if (currentLayout === "3d-primary") {
       rows = 2;
       cols = 2;
       viewports = [
-        { id: "viewport-1", position: [0, 0], span: [2, 1] }, // 3D lớn
-        { id: "viewport-2", position: [0, 1], span: [2, 1] }, // Thông tin
+        { id: "viewport-1", position: [0, 0], span: [2, 1] },
+        { id: "viewport-2", position: [0, 1], span: [2, 1] },
       ];
     } else if (currentLayout === "3d-only") {
       rows = 1;
       cols = 1;
-      viewports = [
-        { id: "viewport-1", position: [0, 0] }, // Chỉ 3D
-      ];
+      viewports = [{ id: "viewport-1", position: [0, 0] }];
     } else if (currentLayout === "frame-view") {
       rows = 1;
       cols = 1;
-      viewports = [
-        { id: "viewport-1", position: [0, 0] }, // Frame view
-      ];
+      viewports = [{ id: "viewport-1", position: [0, 0] }];
     } else if (currentLayout.startsWith("custom-")) {
       try {
-        // Xử lý bố cục tùy chỉnh, ví dụ: custom-2x3
         const [rowCount, colCount] = currentLayout
           .replace("custom-", "")
           .split("x")
           .map(Number);
 
-        // Kiểm tra tính hợp lệ của số hàng và cột
         if (
           isNaN(rowCount) ||
           isNaN(colCount) ||
@@ -250,7 +230,6 @@ export const useLayoutStore = create<LayoutState>((set, get) => ({
         };
       }
     } else {
-      // Mặc định cho các layout không xác định
       console.warn("Layout không được hỗ trợ:", currentLayout);
     }
 
