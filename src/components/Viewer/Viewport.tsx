@@ -66,6 +66,8 @@ const Viewport: React.FC<ViewportProps> = React.memo(({ id }) => {
   const [isLoading, setIsLoading] = useState(false);
   const metadataCacheRef = useRef<Map<string, any>>(new Map());
   const previousImageIdRef = useRef<string | null>(null);
+  const currentSeriesRef = useRef<string | null>(null);
+  const preloadedImagesRef = useRef<Set<string>>(new Set());
 
   const [dicomInfo, setDicomInfo] = useState({
     studyDate: "",
@@ -172,27 +174,66 @@ const Viewport: React.FC<ViewportProps> = React.memo(({ id }) => {
     }
   }, []);
 
+  // Hàm tải trước các frame lân cận
+  const preloadAdjacentImages = useCallback(
+    async (imageIds: string[], currentIndex: number) => {
+      if (!imageIds || imageIds.length <= 1) return;
+
+      const preloadCount = 5;
+      const startIndex = Math.max(0, currentIndex - preloadCount);
+      const endIndex = Math.min(
+        imageIds.length - 1,
+        currentIndex + preloadCount
+      );
+
+      for (let i = startIndex; i <= endIndex; i++) {
+        if (
+          i !== currentIndex &&
+          !preloadedImagesRef.current.has(imageIds[i])
+        ) {
+          try {
+            await imageLoader.loadAndCacheImage(imageIds[i]);
+            preloadedImagesRef.current.add(imageIds[i]);
+          } catch (error) {
+            console.warn(`Không thể tải trước frame ${i}:`, error);
+          }
+        }
+      }
+    },
+    []
+  );
+
+  const clearCacheIfNeeded = useCallback((imageId: string) => {
+    const seriesMatch = imageId.match(/series\/([^/]+)/);
+    const currentSeriesUID = seriesMatch ? seriesMatch[1] : null;
+
+    if (currentSeriesUID && currentSeriesUID !== currentSeriesRef.current) {
+      console.log("Series thay đổi, xóa cache");
+      metadataCacheRef.current.clear();
+      cache.purgeCache();
+      preloadedImagesRef.current.clear();
+      currentSeriesRef.current = currentSeriesUID;
+    }
+  }, []);
+
   const loadAndDisplayImage = useCallback(
     async (imageId: string) => {
       if (previousImageIdRef.current === imageId) {
         return;
       }
-
+      clearCacheIfNeeded(imageId);
       previousImageIdRef.current = imageId;
 
       if (!viewportRef.current) {
         return;
       }
-
       setIsLoading(true);
 
       try {
         if (!viewportRef.current || !viewportRef.current.isConnected) {
           return;
         }
-
         let renderingEngine = getRenderingEngine(renderingEngineId);
-
         if (!renderingEngine || renderingEngine.hasBeenDestroyed) {
           renderingEngine = new RenderingEngine(renderingEngineId);
         }
@@ -261,7 +302,6 @@ const Viewport: React.FC<ViewportProps> = React.memo(({ id }) => {
           await extractDicomInfo(imageId);
 
           if (!viewportRef.current || !viewportRef.current.isConnected) {
-            console.warn("Element không còn tồn tại, hủy thao tác");
             return;
           }
 
@@ -270,7 +310,6 @@ const Viewport: React.FC<ViewportProps> = React.memo(({ id }) => {
               if (!viewportRef.current || !viewportRef.current.isConnected) {
                 return;
               }
-
               renderingEngine = new RenderingEngine(renderingEngineId);
               renderingEngine.enableElement({
                 viewportId,
@@ -290,7 +329,6 @@ const Viewport: React.FC<ViewportProps> = React.memo(({ id }) => {
               if (!viewportRef.current || !viewportRef.current.isConnected) {
                 return;
               }
-
               renderingEngine.enableElement({
                 viewportId,
                 element: viewportRef.current,
@@ -305,6 +343,13 @@ const Viewport: React.FC<ViewportProps> = React.memo(({ id }) => {
             stackViewport.setStack([imageId]);
             fitImageToViewport(stackViewport);
             stackViewport.render();
+
+            if (viewport && viewport.imageIds) {
+              const currentIndex = viewport.imageIds.indexOf(imageId);
+              if (currentIndex !== -1) {
+                preloadAdjacentImages(viewport.imageIds, currentIndex);
+              }
+            }
           } catch (viewportError: any) {
             console.error(
               "Lỗi khi truy cập viewport sau khi tải hình ảnh:",
@@ -324,7 +369,6 @@ const Viewport: React.FC<ViewportProps> = React.memo(({ id }) => {
               renderingEngine = new RenderingEngine(renderingEngineId);
             }
 
-            // Tạo lại viewport
             renderingEngine.enableElement({
               viewportId,
               element: viewportRef.current,
@@ -349,17 +393,27 @@ const Viewport: React.FC<ViewportProps> = React.memo(({ id }) => {
         setIsLoading(false);
       }
     },
-    [renderingEngineId, viewportId, fitImageToViewport, extractDicomInfo]
+    [
+      renderingEngineId,
+      viewportId,
+      fitImageToViewport,
+      extractDicomInfo,
+      clearCacheIfNeeded,
+      preloadAdjacentImages,
+      viewport,
+    ]
   );
 
   const clearCache = useCallback(() => {
     metadataCacheRef.current.clear();
     cache.purgeCache();
+    preloadedImagesRef.current.clear();
+    currentSeriesRef.current = null;
   }, []);
 
   useEffect(() => {
     if (!viewportRef.current) return;
-    clearCache();
+    // clearCache();
 
     const initTimer = setTimeout(() => {
       if (!viewportRef.current || !viewportRef.current.isConnected) {

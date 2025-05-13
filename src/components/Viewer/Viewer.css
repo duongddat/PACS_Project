@@ -46,7 +46,7 @@
 
 .left-panel {
   width: 300px;
-  min-width: 200px;
+  min-width: 160px;
   max-width: 600px;
   background-color: var(--dark-bg-secondary);
   border-right: 1px solid var(--dark-border-color);

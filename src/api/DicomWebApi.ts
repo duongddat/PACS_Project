@@ -1,9 +1,5 @@
-import { Study, Series, Instance } from "./types";
-import {
-  parseDicomStudy,
-  parseDicomTag,
-  formatDicomDate,
-} from "../utils/dicomUtils";
+import { Series, Instance } from "./types";
+import { parseDicomStudy, parseDicomTag } from "../utils/dicomUtils";
 
 const API_URL = process.env.REACT_APP_API_URL;
 

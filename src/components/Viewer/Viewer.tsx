@@ -450,7 +450,7 @@ const Viewer = React.memo(() => {
     const onMouseMove = (e: MouseEvent) => {
       if (!isResizing) return;
       const newWidth = startWidth + (e.clientX - startX);
-      const minWidth = 200;
+      const minWidth = 160;
       const maxWidth = 600;
       const clampedWidth = Math.max(minWidth, Math.min(maxWidth, newWidth));
 
