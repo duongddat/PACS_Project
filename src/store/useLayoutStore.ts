@@ -22,6 +22,7 @@ interface LayoutState {
   setLayout: (layout: LayoutType) => void;
   resetViewportCache: () => void;
   forceRefreshViewports: () => void;
+  resetToDefaultLayout: () => void;
   getViewportConfiguration: () => {
     rows: number;
     cols: number;
@@ -39,6 +40,10 @@ export const useLayoutStore = create<LayoutState>((set, get) => ({
   layoutChangeTimestamp: Date.now(),
 
   setLayout: (layout: LayoutType) => {
+    if (layout === get().currentLayout) {
+      return;
+    }
+
     let viewportCount = 1;
     if (layout === "1x1") {
       viewportCount = 1;
@@ -71,6 +76,13 @@ export const useLayoutStore = create<LayoutState>((set, get) => ({
       viewportCount,
       layoutChangeTimestamp: Date.now(),
     });
+  },
+
+  resetToDefaultLayout: () => {
+    const defaultLayout: LayoutType = "1x1";
+    if (get().currentLayout !== defaultLayout) {
+      get().setLayout(defaultLayout);
+    }
   },
 
   forceRefreshViewports: () => {

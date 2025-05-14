@@ -76,6 +76,12 @@ const LayoutSelector: React.FC<LayoutSelectorProps> = ({ onLayoutChange }) => {
     };
   }, [handleClickOutside]);
 
+  useEffect(() => {
+    return () => {
+      setIsOpen(false);
+    };
+  }, []);
+
   const adjustDropdownPosition = useCallback(() => {
     if (isOpen && dropdownRef.current && buttonRef.current) {
       const dropdown = dropdownRef.current;
@@ -170,10 +176,11 @@ const LayoutSelector: React.FC<LayoutSelectorProps> = ({ onLayoutChange }) => {
       } catch (error) {
         console.error("Lỗi khi chọn layout:", error);
       } finally {
+        // Đảm bảo đóng dropdown sau khi chọn layout
         setIsOpen(false);
       }
     },
-    [onLayoutChange, setLayout]
+    [setLayout, onLayoutChange]
   );
 
   const handleCustomLayoutSelect = useCallback(

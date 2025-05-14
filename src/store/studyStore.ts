@@ -1,6 +1,7 @@
 import { create } from "zustand";
 import { DicomWebApi } from "../api/DicomWebApi";
 import { Study, Series, Instance } from "../api/types";
+import { useLayoutStore } from "./useLayoutStore";
 
 interface StudyState {
   studies: Study[];
@@ -134,6 +135,10 @@ export const useStudyStore = create<StudyState>((set, get) => ({
   },
 
   clearStudy: () => {
+    // Reset layout về mặc định khi chuyển study
+    const layoutStore = useLayoutStore.getState();
+    layoutStore.resetToDefaultLayout();
+
     set({
       currentStudy: null,
       currentSeries: null,

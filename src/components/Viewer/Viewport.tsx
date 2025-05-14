@@ -208,7 +208,6 @@ const Viewport: React.FC<ViewportProps> = React.memo(({ id }) => {
     const currentSeriesUID = seriesMatch ? seriesMatch[1] : null;
 
     if (currentSeriesUID && currentSeriesUID !== currentSeriesRef.current) {
-      console.log("Series thay đổi, xóa cache");
       metadataCacheRef.current.clear();
       cache.purgeCache();
       preloadedImagesRef.current.clear();
